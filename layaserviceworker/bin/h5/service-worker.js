@@ -30,7 +30,7 @@ var CURRENT_CACHES = {
 };
 
 var myPath = "service-worker.js";
-var urlBasePath = location.herf.replace(myPath, "");
+var urlBasePath = location.href.replace(myPath, "");
 function getRelativePath(tPath) {
   return tPath.replace(urlBasePath, "");
 }
