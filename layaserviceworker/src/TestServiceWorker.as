@@ -46,7 +46,11 @@ package {
 			var navigator:*;
 			navigator = Browser.window.navigator;
 			if ('serviceWorker' in navigator) {
-				navigator.serviceWorker.register('./service-worker.js', {scope: './'}).then(function() {
+				navigator.serviceWorker.register('./service-worker.js', { scope: './' } ).then(function(worker) {
+					if (worker)
+					{
+						worker.update();
+					}
 					// Registration was successful. Now, check to see whether the service worker is controlling the page.
 						if (navigator.serviceWorker.controller) {
 							// If .controller is set, then this page is being actively controlled by the service worker.

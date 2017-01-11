@@ -421,7 +421,10 @@ var Laya=window.Laya=(function(window,document){
 			var navigator;
 			navigator=Browser.window.navigator;
 			if ('serviceWorker' in navigator){
-				navigator.serviceWorker.register('./service-worker.js',{scope:'./'}).then(function(){
+				navigator.serviceWorker.register('./service-worker.js',{scope:'./' }).then(function(worker){
+					if (worker){
+						worker.update();
+					}
 					if (navigator.serviceWorker.controller){
 						_$this.showInfo('This funky font has been cached by the controlling service worker.');
 					}
