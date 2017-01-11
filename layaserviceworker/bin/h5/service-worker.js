@@ -43,7 +43,7 @@ function (event) {
     }).catch(
       function (e) {
       console.log("Oops, error");
-    });
+    })
   );
 });
 
