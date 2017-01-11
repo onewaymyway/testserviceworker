@@ -122,6 +122,9 @@ self.addEventListener('fetch', function (event) {
             if (self.verdata && self.verdata[tResPath]) {
               console.log("cache resPath:", tResPath);
               cache.put(event.request, response.clone());
+            }else
+            {
+              console.log("not cache for not in verdata resPath:", tResPath);
             }
 
           } else {
