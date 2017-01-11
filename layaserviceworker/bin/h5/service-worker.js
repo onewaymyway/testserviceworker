@@ -29,6 +29,11 @@ var CURRENT_CACHES = {
   font: 'font-cache-v' + CACHE_VERSION
 };
 
+var myPath = "service-worker.js";
+var urlBasePath = location.herf.replace(myPath, "");
+function getRelativePath(tPath) {
+  return tPath.replace(urlBasePath, "");
+}
 self.addEventListener('install',
   function (event) {
     console.log("install");
@@ -63,6 +68,7 @@ self.addEventListener('activate', function (event) {
         ).then(
           function (data) {
             console.log(data);
+            self.verdata = data;
           }).catch(
           function (e) {
             console.log("Oops, error");
@@ -98,9 +104,7 @@ self.addEventListener('fetch', function (event) {
           console.log('  Response for %s from network is: %O',
             event.request.url, response);
 
-          if (response.status < 400 &&
-            response.headers.has('content-type') &&
-            response.headers.get('content-type').match(/^font\//i)) {
+          if (response.status < 400) {
             // This avoids caching responses that we know are errors (i.e. HTTP status code of 4xx or 5xx).
             // We also only want to cache responses that correspond to fonts,
             // i.e. have a Content-Type response header that starts with "font/".
@@ -113,7 +117,13 @@ self.addEventListener('fetch', function (event) {
             // the original response object which we will return back to the controlled page.
             // (see https://fetch.spec.whatwg.org/#dom-response-clone)
             console.log('  Caching the response to', event.request.url);
-            cache.put(event.request, response.clone());
+            var tResPath = getRelativePath(event.request.url);
+            console.log("resPath:", tResPath);
+            if (self.verdata && self.verdata[tResPath]) {
+              console.log("cache resPath:", tResPath);
+              cache.put(event.request, response.clone());
+            }
+
           } else {
             console.log('  Not caching the response to', event.request.url);
           }
