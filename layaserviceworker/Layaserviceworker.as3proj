@@ -17,6 +17,7 @@
   <classpaths>
     <class path="src" />
     <class path="..\..\..\..\codes\laya\libs\LayaAir\core\src" />
+    <class path="..\..\..\..\codes\laya\libs\LayaAir\ui\src" />
   </classpaths>
   <!-- Build options -->
   <build>

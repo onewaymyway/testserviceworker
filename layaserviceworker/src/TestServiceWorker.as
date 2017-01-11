@@ -1,6 +1,7 @@
 package {
 	import laya.display.Sprite;
 	import laya.display.Text;
+	import laya.ui.Image;
 	import laya.utils.Browser;
 	
 	/**
@@ -8,7 +9,7 @@ package {
 	 * @author ww
 	 */
 	public class TestServiceWorker {
-		
+		//https://onewaymyway.github.io/testserviceworker/layaserviceworker/bin/h5/index.html
 		public function TestServiceWorker() {
 			Laya.init(1000, 900);
 			msgTxt = new Text();
@@ -32,6 +33,11 @@ package {
 			//sp = new Sprite();
 			//sp.graphics.drawRect(0, 0, 100, 100, "#ff0000");
 			//Laya.stage.addChild(sp);
+			var img:Image;
+			img = new Image();
+			img.skin = "res/image.png";
+			img.pos(200, 200);
+			Laya.stage.addChild(img);
 		
 		}
 		
