@@ -29,13 +29,13 @@ var CURRENT_CACHES = {
   font: 'font-cache-v' + CACHE_VERSION
 };
 
-self.addEventListener('install', 
-function (event) {
-  console.log("install");
-  event.waitUntil(
-   
-  );
-});
+self.addEventListener('install',
+  function (event) {
+    console.log("install");
+    //event.waitUntil(
+
+    //);
+  });
 
 self.addEventListener('activate', function (event) {
   console.log('activate:');
@@ -56,17 +56,17 @@ self.addEventListener('activate', function (event) {
             return caches.delete(cacheName);
           }
         }),
-         fetch("./configs/file.json").then(
-      function (response) {
-      return response.json();
-    }
-    ).then(
-      function (data) {
-      console.log(data);
-    }).catch(
-      function (e) {
-      console.log("Oops, error");
-    })
+        fetch("./configs/file.json").then(
+          function (response) {
+            return response.json();
+          }
+        ).then(
+          function (data) {
+            console.log(data);
+          }).catch(
+          function (e) {
+            console.log("Oops, error");
+          })
       );
     })
   );
