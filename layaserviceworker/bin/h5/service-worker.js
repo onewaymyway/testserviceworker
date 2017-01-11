@@ -111,7 +111,8 @@ self.addEventListener('fetch', function (event) {
               console.log("cache resPath:", tPurePath);
               var cacheResponse= response.clone();
               cacheResponse.ver=self.verdata[tPurePath];
-              cache.put(adptRequest.clone(), response.clone());
+              cache.put(adptRequest.clone(), cacheResponse);
+              console.log("cache:",adptRequest.url,cacheResponse)
               //updateCacheVer(tPurePath, self.verdata[tPurePath])
             } else {
               console.log("not cache for not in verdata resPath:", tResPath);
