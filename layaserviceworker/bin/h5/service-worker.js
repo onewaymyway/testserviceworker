@@ -32,6 +32,25 @@ var CACHE_SIGN = "layaairtest";
 function getRelativePath(tPath) {
   return tPath.replace(urlBasePath, "");
 }
+function getPreCacheVer(file) {
+  return localStorage[file];
+}
+function updateCacheVer(file, ver) {
+  localStorage[file] = ver;
+}
+function getPureRelativePath(tPath) {
+  tPath = getRelativePath(tPath)
+  if (tPath.indexOf("?") >= 0) {
+    tPath = tPath.split("?")[0];
+  }
+  return tPath;
+}
+function getAdptPath(tPath) {
+  if (tPath.indexOf("?") >= 0) {
+    tPath = tPath.split("?")[0];
+  }
+  return tPath;
+}
 self.addEventListener('install',
   function (event) {
     console.log("install");
@@ -43,7 +62,7 @@ self.addEventListener('install',
 self.addEventListener('activate', function (event) {
   console.log('activate:');
   event.waitUntil(
-    fetch("./configs/file.json").then(
+    fetch("./fileconfig.json").then(
       function (response) {
         return response.json();
       }
@@ -61,66 +80,63 @@ self.addEventListener('activate', function (event) {
 self.addEventListener('fetch', function (event) {
   console.log('Handling fetch event for', event.request.url);
 
-  event.respondWith(
-    caches.open(CACHE_SIGN).then(function (cache) {
-      return cache.match(event.request).then(function (response) {
-        if (response) {
-          // If there is an entry in the cache for event.request, then response will be defined
-          // and we can just return it. Note that in this example, only font resources are cached.
-          console.log(' Found response in cache:', response);
+  tPurePath = getPureRelativePath(event.request.url);
+  if (self.verdata&&self.verdata[tPurePath]) {
+    adptPath = getAdptPath(event.request.url)
+    adptRequest = new Request(adptPath);
+    adptRequest.method = event.request.method;
+    tPromise = caches.open(CACHE_SIGN).then(function (cache) {
+
+      return cache.match(adptRequest).then(function (response) {
+        if (response && self.verdata[tPurePath] == getPreCacheVer(tPurePath)) {
+
+          console.log(' Found response in cache and ver same:', response);
 
           return response;
         }
 
-        // Otherwise, if there is no entry in the cache for event.request, response will be
-        // undefined, and we need to fetch() the resource.
         console.log(' No response for %s found in cache. About to fetch ' +
-          'from network...', event.request.url);
+          'from network...', adptRequest.url);
 
-        // We call .clone() on the request since we might use it in a call to cache.put() later on.
-        // Both fetch() and cache.put() "consume" the request, so we need to make a copy.
-        // (see https://fetch.spec.whatwg.org/#dom-request-clone)
-        return fetch(event.request.clone()).then(function (response) {
+        return fetch(adptRequest.clone()).then(function (response) {
           console.log('  Response for %s from network is: %O',
-            event.request.url, response);
+            adptRequest.url, response);
 
           if (response.status < 400) {
-            // This avoids caching responses that we know are errors (i.e. HTTP status code of 4xx or 5xx).
-            // We also only want to cache responses that correspond to fonts,
-            // i.e. have a Content-Type response header that starts with "font/".
-            // Note that for opaque filtered responses (https://fetch.spec.whatwg.org/#concept-filtered-response-opaque)
-            // we can't access to the response headers, so this check will always fail and the font won't be cached.
-            // All of the Google Web Fonts are served off of a domain that supports CORS, so that isn't an issue here.
-            // It is something to keep in mind if you're attempting to cache other resources from a cross-origin
-            // domain that doesn't support CORS, though!
-            // We call .clone() on the response to save a copy of it to the cache. By doing so, we get to keep
-            // the original response object which we will return back to the controlled page.
-            // (see https://fetch.spec.whatwg.org/#dom-response-clone)
             console.log('  Caching the response to', event.request.url);
-            var tResPath = getRelativePath(event.request.url);
-            console.log("resPath:", tResPath);
-            if (self.verdata && self.verdata[tResPath]) {
-              console.log("cache resPath:", tResPath);
-              cache.put(event.request, response.clone());
+            var tResPath = tPurePath;
+            console.log("resPath:", tPurePath);
+            if (self.verdata && self.verdata[tPurePath]) {
+              console.log("cache resPath:", tPurePath);
+              cache.put(adptRequest.clone(), response.clone());
+              updateCacheVer(tPurePath, self.verdata[tPurePath])
             } else {
               console.log("not cache for not in verdata resPath:", tResPath);
             }
 
           } else {
-            console.log('  Not caching the response to', event.request.url);
+            console.log('  Not caching the response to', adptRequest.url);
           }
-
-          // Return the original response object, which will be used to fulfill the resource request.
           return response;
         });
       }).catch(function (error) {
-        // This catch() will handle exceptions that arise from the match() or fetch() operations.
-        // Note that a HTTP error response (e.g. 404) will NOT trigger an exception.
-        // It will return a normal response object that has the appropriate error code set.
         console.error('  Error in fetch handler:', error);
 
         throw error;
       });
     })
+
+
+  } else {
+
+    tPromise = fetch(event.request.clone()).then(function (response) {   
+      return response;
+    }).catch(function (error) {
+      console.error('  Error in fetch handler:', error);
+      throw error;
+    });
+  }
+  event.respondWith(
+    tPromise
   );
 });
