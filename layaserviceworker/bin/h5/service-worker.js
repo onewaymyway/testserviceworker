@@ -25,12 +25,10 @@
 // flow and the old cache(s) will be purged as part of the activate event handler when the
 // updated service worker is activated.
 var CACHE_VERSION = 1;
-var CURRENT_CACHES = {
-  font: 'font-cache-v' + CACHE_VERSION
-};
 
 var myPath = "service-worker.js";
 var urlBasePath = location.href.replace(myPath, "");
+var CACHE_SIGN = "layaairtest";
 function getRelativePath(tPath) {
   return tPath.replace(urlBasePath, "");
 }
@@ -44,37 +42,19 @@ self.addEventListener('install',
 
 self.addEventListener('activate', function (event) {
   console.log('activate:');
-  // Delete all caches that aren't named in CURRENT_CACHES.
-  // While there is only one cache in this example, the same logic will handle the case where
-  // there are multiple versioned caches.
-  var expectedCacheNames = Object.keys(CURRENT_CACHES).map(function (key) {
-    return CURRENT_CACHES[key];
-  });
-
   event.waitUntil(
-    caches.keys().then(function (cacheNames) {
-      return Promise.all(
-        cacheNames.map(function (cacheName) {
-          if (expectedCacheNames.indexOf(cacheName) === -1) {
-            // If this cache name isn't present in the array of "expected" cache names, then delete it.
-            console.log('Deleting out of date cache:', cacheName);
-            return caches.delete(cacheName);
-          }
-        }),
-        fetch("./configs/file.json").then(
-          function (response) {
-            return response.json();
-          }
-        ).then(
-          function (data) {
-            console.log(data);
-            self.verdata = data;
-          }).catch(
-          function (e) {
-            console.log("Oops, error");
-          })
-      );
-    })
+    fetch("./configs/file.json").then(
+      function (response) {
+        return response.json();
+      }
+    ).then(
+      function (data) {
+        console.log(data);
+        self.verdata = data;
+      }).catch(
+      function (e) {
+        console.log("Oops, error");
+      })
   );
 });
 
@@ -82,7 +62,7 @@ self.addEventListener('fetch', function (event) {
   console.log('Handling fetch event for', event.request.url);
 
   event.respondWith(
-    caches.open(CURRENT_CACHES.font).then(function (cache) {
+    caches.open(CACHE_SIGN).then(function (cache) {
       return cache.match(event.request).then(function (response) {
         if (response) {
           // If there is an entry in the cache for event.request, then response will be defined
@@ -122,8 +102,7 @@ self.addEventListener('fetch', function (event) {
             if (self.verdata && self.verdata[tResPath]) {
               console.log("cache resPath:", tResPath);
               cache.put(event.request, response.clone());
-            }else
-            {
+            } else {
               console.log("not cache for not in verdata resPath:", tResPath);
             }
 
