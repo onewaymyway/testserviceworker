@@ -88,7 +88,8 @@ self.addEventListener('fetch', function (event) {
     tPromise = caches.open(CACHE_SIGN).then(function (cache) {
 
       return cache.match(adptRequest).then(function (response) {
-        if (response && self.verdata[tPurePath] == getPreCacheVer(tPurePath)) {
+        if (response ) {
+          //&& self.verdata[tPurePath] == getPreCacheVer(tPurePath)
 
           console.log(' Found response in cache and ver same:', response);
 
@@ -108,8 +109,10 @@ self.addEventListener('fetch', function (event) {
             console.log("resPath:", tPurePath);
             if (self.verdata && self.verdata[tPurePath]) {
               console.log("cache resPath:", tPurePath);
+              var cacheResponse= response.clone();
+              cacheResponse.ver=self.verdata[tPurePath];
               cache.put(adptRequest.clone(), response.clone());
-              updateCacheVer(tPurePath, self.verdata[tPurePath])
+              //updateCacheVer(tPurePath, self.verdata[tPurePath])
             } else {
               console.log("not cache for not in verdata resPath:", tResPath);
             }
