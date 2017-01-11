@@ -387,17 +387,47 @@ var Laya=window.Laya=(function(window,document){
 	//class TestServiceWorker
 	var TestServiceWorker=(function(){
 		function TestServiceWorker(){
+			this.msgTxt=null;
 			Laya.init(1000,900);
+			this.msgTxt=new Text();
+			this.msgTxt.size(1000,600);
+			this.msgTxt.color="#00ff00";
+			Laya.stage.addChild(this.msgTxt);
+			this.showInfo("hello");
+			this.initServiceWorker();
 			this.test();
 		}
 
 		__class(TestServiceWorker,'TestServiceWorker');
 		var __proto=TestServiceWorker.prototype;
-		__proto.test=function(){
-			var sp;
-			sp=new Sprite();
-			sp.graphics.drawRect(0,0,100,100,"#ff0000");
-			Laya.stage.addChild(sp);
+		__proto.showInfo=function(info){
+			if (!this.msgTxt)
+				return;
+			this.msgTxt.text+="\n"+info;
+		}
+
+		__proto.test=function(){}
+		//Laya.stage.addChild(sp);
+		__proto.initServiceWorker=function(){
+			var _$this=this;
+			this.showInfo("try initServiceWorker");
+			var navigator;
+			navigator=Browser.window.navigator;
+			if ('serviceWorker' in navigator){
+				navigator.serviceWorker.register('./service-worker.js',{scope:'./'}).then(function(){
+					if (navigator.serviceWorker.controller){
+						_$this.showInfo('This funky font has been cached by the controlling service worker.');
+					}
+					else {
+						_$this.showInfo('Please reload this page to allow the service worker to handle network operations.');
+					}
+					}).catch(function(error){
+					_$this.showInfo(error);
+				});
+			}
+			else {
+				this.showInfo('Service workers are not supported in the current browser.');
+			}
 		}
 
 		return TestServiceWorker;
@@ -14549,7 +14579,7 @@ var Laya=window.Laya=(function(window,document){
 	})(FileBitmap)
 
 
-	Laya.__init([EventDispatcher,Render,Browser,Timer,LoaderManager,LocalStorage]);
+	Laya.__init([EventDispatcher,Browser,Render,Timer,LoaderManager,LocalStorage]);
 	new TestServiceWorker();
 
 })(window,document,Laya);
