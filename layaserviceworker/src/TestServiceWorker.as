@@ -10,6 +10,7 @@ package {
 	 */
 	public class TestServiceWorker {
 		//https://onewaymyway.github.io/testserviceworker/layaserviceworker/bin/h5/index.html
+		//https://onewaymyway.github.io/testserviceworker/layaserviceworker/bin/h5/service-worker.js
 		public function TestServiceWorker() {
 			Laya.init(1000, 900);
 			msgTxt = new Text();
@@ -26,6 +27,7 @@ package {
 			if (!msgTxt)
 				return;
 			msgTxt.text += "\n" + info;
+			trace(info);
 		}
 		
 		private function test():void {

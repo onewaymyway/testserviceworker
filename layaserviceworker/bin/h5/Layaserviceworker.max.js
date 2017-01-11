@@ -405,6 +405,7 @@ var Laya=window.Laya=(function(window,document){
 			if (!this.msgTxt)
 				return;
 			this.msgTxt.text+="\n"+info;
+			console.log(info);
 		}
 
 		__proto.test=function(){
