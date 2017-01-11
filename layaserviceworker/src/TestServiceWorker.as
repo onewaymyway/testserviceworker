@@ -40,6 +40,12 @@ package {
 			img.skin = "res/image.png";
 			img.pos(200, 200);
 			Laya.stage.addChild(img);
+			
+			var img:Image;
+			img = new Image();
+			img.skin = "res/btn_close.png";
+			img.pos(500, 200);
+			Laya.stage.addChild(img);
 		
 		}
 		

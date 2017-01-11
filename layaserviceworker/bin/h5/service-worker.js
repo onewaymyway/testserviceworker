@@ -33,17 +33,7 @@ self.addEventListener('install',
 function (event) {
   console.log("install");
   event.waitUntil(
-    fetch("./configs/file.json").then(
-      function (response) {
-      return response.json();
-    }
-    ).then(
-      function (data) {
-      console.log(data);
-    }).catch(
-      function (e) {
-      console.log("Oops, error");
-    })
+   
   );
 });
 
@@ -65,7 +55,18 @@ self.addEventListener('activate', function (event) {
             console.log('Deleting out of date cache:', cacheName);
             return caches.delete(cacheName);
           }
-        })
+        }),
+         fetch("./configs/file.json").then(
+      function (response) {
+      return response.json();
+    }
+    ).then(
+      function (data) {
+      console.log(data);
+    }).catch(
+      function (e) {
+      console.log("Oops, error");
+    })
       );
     })
   );
