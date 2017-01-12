@@ -490,11 +490,12 @@ var Laya=window.Laya=(function(window,document){
 			this.msgTxt.color="#00ff00";
 			Laya.stage.addChild(this.msgTxt);
 			this.showInfo("hello");
-			this.initServiceWorker();
+			Laya.timer.frameOnce(1,this,this.initServiceWorker);
 		}
 
 		__class(TestServiceWorker,'TestServiceWorker');
 		var __proto=TestServiceWorker.prototype;
+		//initServiceWorker();
 		__proto.initServiceWorker=function(){
 			this.showInfo("try initServiceWorker");
 			ServiceWorkerTools.I.register(new Handler(this,this.serviceWorkerInited));

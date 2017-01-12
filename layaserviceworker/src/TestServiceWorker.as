@@ -20,7 +20,8 @@ package {
 			msgTxt.color = "#00ff00";
 			Laya.stage.addChild(msgTxt);
 			showInfo("hello");
-			initServiceWorker();
+			Laya.timer.frameOnce(1, this, initServiceWorker);
+			//initServiceWorker();
 		
 		}
 		
