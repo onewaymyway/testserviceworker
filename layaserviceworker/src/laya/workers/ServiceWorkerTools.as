@@ -63,6 +63,7 @@ package laya.workers {
 			if (!option) {
 				option = {scope: './'};
 			}
+			this._workDoneHandler = workDoneHandler;
 			var navigator:* = Browser.window.navigator;
 			if ('serviceWorker' in navigator) {
 				navigator.serviceWorker.register(workerPath, option).then(function(worker) {
