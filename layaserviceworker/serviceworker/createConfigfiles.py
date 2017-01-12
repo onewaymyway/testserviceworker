@@ -65,7 +65,7 @@ def initConfig(filePath):
 
 def createFileVerFile():
     f=open(getWorkPath("fileconfig.json"),"w")
-    f.write(json.dumps(mdData))
+    f.write(json.dumps(mdData,sort_keys=True))
     f.close();
     
 def createConfigFile():
@@ -74,7 +74,7 @@ def createConfigFile():
     configData["workerPath"]=workerPath;
     configData["fileVer"]=getFileMd5(getWorkPath("fileconfig.json"));
     f=open(getWorkPath("workerconfig.json"),"w")
-    f.write(json.dumps(configData))
+    f.write(json.dumps(configData,sort_keys=True))
     f.close();
     
 def beginWork():
