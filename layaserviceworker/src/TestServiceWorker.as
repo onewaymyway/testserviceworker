@@ -48,11 +48,11 @@ package {
 		private function serviceWorkerInited():void {
 			showInfo("serviceWorkerInited from client");
 			
-			Laya.loader.load("fileconfig.json",new Handler(this,onFileVerFile),null,Loader.JSON)
+			Laya.loader.load("fileconfig.json"+"?ver"+Math.random(),new Handler(this,onFileVerFile),null,Loader.JSON)
 		}
-		private function onFileVerFile():void
+		private function onFileVerFile(data:Object):void
 		{
-			URL.version = Loader.getRes("fileconfig.json");
+			URL.version = data;
 			test();
 		}
 		private var msgTxt:Text;

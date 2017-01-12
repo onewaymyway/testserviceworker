@@ -714,11 +714,11 @@ var Laya=window.Laya=(function(window,document){
 
 		__proto.serviceWorkerInited=function(){
 			this.showInfo("serviceWorkerInited from client");
-			Laya.loader.load("fileconfig.json",new Handler(this,this.onFileVerFile),null,"json")
+			Laya.loader.load("fileconfig.json"+"?ver"+Math.random(),new Handler(this,this.onFileVerFile),null,"json")
 		}
 
-		__proto.onFileVerFile=function(){
-			URL.version=Loader.getRes("fileconfig.json");
+		__proto.onFileVerFile=function(data){
+			URL.version=data;
 			this.test();
 		}
 
