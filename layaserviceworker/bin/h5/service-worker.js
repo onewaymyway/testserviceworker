@@ -97,9 +97,8 @@ self.addEventListener('fetch', function (event) {
     
     tPromise = caches.open(CACHE_SIGN).then(function (cache) {
 
-      var adptRequest=getAdptRequest(event.request);
 
-      return cache.match(adptRequest).then(function (response) {
+      return cache.match(getAdptRequest(event.request)).then(function (response) {
         if (response ) {
           //&& self.verdata[tPurePath] == getPreCacheVer(tPurePath)
 
@@ -110,21 +109,19 @@ self.addEventListener('fetch', function (event) {
 
         console.log(' No response for %s found in cache. About to fetch ' +
           'from network...', event.request.url);
-        //adptRequest=getAdptRequest(event.request);
 
-        return fetch(adptRequest).then(function (response) {
+        return fetch(getAdptRequest(event.request)).then(function (response) {
           console.log('  Response for %s from network is: %O',
-            adptRequest.url, response,response.url);
+            response,response.url);
+            adptRequest=getAdptRequest(event.request);
 
           if (response.status < 400) {
-            console.log('  Caching the response to', event.request.url,adptRequest.url,response.url);
-            var tResPath = tPurePath;
+            console.log('  Caching the response to', event.request.url,response.url);
+            tPurePath=getPureRelativePath(response.url);
             console.log("resPath:", tPurePath);
             if (self.verdata && self.verdata[tPurePath]) {
               console.log("cache resPath:", tPurePath);
               var cacheResponse= response.clone();
-             //cacheResponse.ver=self.verdata[tPurePath];
-              //cacheResponse.headers.set("fileVer",self.verdata[tPurePath]);
               cache.put(adptRequest.clone(), cacheResponse);
               console.log("cache:",adptRequest.url,cacheResponse.url)
               //updateCacheVer(tPurePath, self.verdata[tPurePath])
