@@ -432,8 +432,9 @@ var Laya=window.Laya=(function(window,document){
 			}
 		}
 
-		__proto.register=function(workerPath,workDoneHandler,option,forceUpdate){
+		__proto.register=function(workDoneHandler,workerPath,option,forceUpdate){
 			var _$this=this;
+			(workerPath===void 0)&& (workerPath="./service-worker.js");
 			(forceUpdate===void 0)&& (forceUpdate=true);
 			if (!option){
 				option={scope:'./'};
@@ -496,7 +497,7 @@ var Laya=window.Laya=(function(window,document){
 		var __proto=TestServiceWorker.prototype;
 		__proto.initServiceWorker=function(){
 			this.showInfo("try initServiceWorker");
-			ServiceWorkerTools.I.register('./service-worker.js',new Handler(this,this.serviceWorkerInited));
+			ServiceWorkerTools.I.register(new Handler(this,this.serviceWorkerInited));
 		}
 
 		__proto.serviceWorkerInited=function(){
@@ -512,19 +513,21 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		__proto.test=function(){
-			var img;
-			img=new Image();
-			img.skin="res/image.png";
-			img.pos(200,200);
-			Laya.stage.addChild(img);
-			img=new Image();
-			img.skin="res/btn_close.png";
-			img.pos(500,200);
-			Laya.stage.addChild(img);
-			img=new Image();
-			img.skin="res/clip_num.png";
-			img.pos(200,500);
-			Laya.stage.addChild(img);
+			var imgs=["res/tt/clip_num.png","res/pics/g1.png","res/pics/g2.png","res/pics/g3.png","res/pics/g4.png","res/pics/gg1.png","res/pics/gg2.png","res/image.png","res/image.png","res/image.png","res/btn_close.png","res/clip_num.png"];
+			var i=0,len=0;
+			len=imgs.length;
+			var xCount=6;
+			var tX=NaN;
+			var tY=NaN;
+			for (i=0;i < len;i++){
+				var img;
+				img=new Image();
+				img.skin=imgs[i];
+				tX=(i % xCount)*150;
+				tY=Math.floor(i/xCount)*200;
+				img.pos(tX,tY);
+				Laya.stage.addChild(img);
+			}
 		}
 
 		return TestServiceWorker;

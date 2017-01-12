@@ -59,7 +59,7 @@ package laya.workers {
 				
 			}
 		}
-		public function register(workerPath:String,workDoneHandler:Handler=null, option:Object = null, forceUpdate:Boolean = true):* {
+		public function register(workDoneHandler:Handler=null,workerPath:String="./service-worker.js", option:Object = null, forceUpdate:Boolean = true):* {
 			if (!option) {
 				option = {scope: './'};
 			}
