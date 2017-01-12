@@ -118,7 +118,7 @@ self.addEventListener('install',
  */
 function reloadConfigAndClearPre() {
   //加载worker配置文件
-  return fetch("./workerconfig.json").then(
+  return fetch("./workerconfig.json?ver="+Math.random()).then(
     function (response) {
       return response.json();
     }
