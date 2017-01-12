@@ -107,10 +107,10 @@ self.addEventListener('fetch', function (event) {
 
         return fetch(adptRequest.clone()).then(function (response) {
           console.log('  Response for %s from network is: %O',
-            adptRequest.url, response);
+            adptRequest.url, response,response.url);
 
           if (response.status < 400) {
-            console.log('  Caching the response to', event.request.url);
+            console.log('  Caching the response to', event.request.url,adptRequest.url,response.url);
             var tResPath = tPurePath;
             console.log("resPath:", tPurePath);
             if (self.verdata && self.verdata[tPurePath]) {
@@ -122,11 +122,11 @@ self.addEventListener('fetch', function (event) {
               console.log("cache:",adptRequest.url,cacheResponse.url)
               //updateCacheVer(tPurePath, self.verdata[tPurePath])
             } else {
-              console.log("not cache for not in verdata resPath:", tResPath);
+              console.log("not cache for not in verdata resPath:", tResPath,response.url);
             }
 
           } else {
-            console.log('  Not caching the response to', adptRequest.url);
+            console.log('  Not caching the response to', adptRequest.url,response.url);
           }
           return response;
         });
