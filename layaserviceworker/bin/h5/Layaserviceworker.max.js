@@ -382,180 +382,6 @@ var Laya=window.Laya=(function(window,document){
 
 
 	/**
-	*...
-	*@author ww
-	*/
-	//class laya.workers.ServiceWorkerTools
-	var ServiceWorkerTools=(function(){
-		function ServiceWorkerTools(){
-			this.messageChannel=null;
-			this._workDoneHandler=null;
-			var _$this=this;
-			this.messageChannel=new MessageChannel();;
-			this.messageChannel.port1.onmessage=function (event){
-				_$this._onMessage(event);
-			};
-		}
-
-		__class(ServiceWorkerTools,'laya.workers.ServiceWorkerTools');
-		var __proto=ServiceWorkerTools.prototype;
-		__proto._onMessage=function(event){
-			if (event && event.data){
-				switch(event.data.msg){
-					case "reloadSuccess":
-						this._workDoneCall();
-						break ;
-					case "reloadFail":
-						this._workDoneCall();
-						break ;
-					}
-			}
-		}
-
-		__proto.sendMessage=function(message){
-			if (!ServiceWorkerTools.isServiceWorkerSupport)
-				return;
-			if (Browser.window.navigator.serviceWorker.controller){
-				Browser.window.navigator.serviceWorker.controller.postMessage(message,[this.messageChannel.port2]);
-			}
-			else {
-				console.log("service worker not installed");
-			}
-		}
-
-		__proto._workDoneCall=function(){
-			if (this._workDoneHandler){
-				var tHandler;
-				tHandler=this._workDoneHandler;
-				this._workDoneHandler=null;
-				tHandler.run();
-			}
-		}
-
-		__proto.register=function(workDoneHandler,workerPath,option,forceUpdate){
-			var _$this=this;
-			(workerPath===void 0)&& (workerPath="./service-worker.js");
-			(forceUpdate===void 0)&& (forceUpdate=true);
-			if (!option){
-				option={scope:'./'};
-			}
-			this._workDoneHandler=workDoneHandler;
-			var navigator=Browser.window.navigator;
-			if ('serviceWorker' in navigator){
-				navigator.serviceWorker.register(workerPath,option).then(function(worker){
-					if (worker && forceUpdate){
-						worker.update();
-					}
-					if (navigator.serviceWorker.controller){
-						console.log('service worker is working');
-						_$this.sendMessage({"cmd":"reloadConfig"});
-					}
-					else {
-						console.log('starting service worker');
-						_$this._workDoneCall();
-					}
-					}).catch(function(error){
-					console.log(error);
-					_$this._workDoneCall();
-				});
-			}
-			else {
-				console.log('Service workers are not supported in the current browser.');
-				this._workDoneCall();
-			}
-		}
-
-		__getset(1,ServiceWorkerTools,'isServiceWorkerSupport',function(){
-			return 'serviceWorker' in Browser.window.navigator;
-		});
-
-		__static(ServiceWorkerTools,
-		['I',function(){return this.I=new ServiceWorkerTools();}
-		]);
-		return ServiceWorkerTools;
-	})()
-
-
-	/**
-	*...
-	*@author ww
-	*/
-	//class TestServiceWorker
-	var TestServiceWorker=(function(){
-		function TestServiceWorker(){
-			this.msgTxt=null;
-			Laya.init(1000,900);
-			this.msgTxt=new Text();
-			this.msgTxt.size(1000,600);
-			this.msgTxt.color="#00ff00";
-			Laya.stage.addChild(this.msgTxt);
-			this.showInfo("hello");
-			Laya.timer.frameOnce(1,this,this.initServiceWorker);
-		}
-
-		__class(TestServiceWorker,'TestServiceWorker');
-		var __proto=TestServiceWorker.prototype;
-		//initServiceWorker();
-		__proto.initServiceWorker=function(){
-			this.showInfo("try initServiceWorker");
-			ServiceWorkerTools.I.register(new Handler(this,this.serviceWorkerInited));
-		}
-
-		__proto.serviceWorkerInited=function(){
-			this.showInfo("serviceWorkerInited from client");
-			this.test();
-		}
-
-		__proto.showInfo=function(info){
-			if (!this.msgTxt)
-				return;
-			this.msgTxt.text+="\n"+info;
-			console.log(info);
-		}
-
-		__proto.test=function(){
-			var imgs=["res/tt/clip_num.png","res/pics/g1.png","res/pics/g2.png","res/pics/g3.png","res/pics/g4.png","res/pics/gg1.png","res/pics/gg2.png","res/image.png","res/image.png","res/image.png","res/btn_close.png","res/clip_num.png"];
-			var i=0,len=0;
-			len=imgs.length;
-			var xCount=6;
-			var tX=NaN;
-			var tY=NaN;
-			for (i=0;i < len;i++){
-				var img;
-				img=new Image();
-				img.skin=imgs[i];
-				tX=(i % xCount)*150;
-				tY=Math.floor(i/xCount)*200;
-				img.pos(tX,tY);
-				Laya.stage.addChild(img);
-			}
-		}
-
-		return TestServiceWorker;
-	})()
-
-
-	/**
-	*Config 用于配置一些全局参数。
-	*/
-	//class Config
-	var Config=(function(){
-		function Config(){};
-		__class(Config,'Config');
-		Config.WebGLTextCacheCount=500;
-		Config.atlasEnable=false;
-		Config.showCanvasMark=false;
-		Config.CPUMemoryLimit=120 *1024 *1024;
-		Config.GPUMemoryLimit=160 *1024 *1024;
-		Config.animationInterval=50;
-		Config.isAntialias=false;
-		Config.isAlpha=false;
-		Config.premultipliedAlpha=false;
-		return Config;
-	})()
-
-
-	/**
 	*<code>EventDispatcher</code> 类是可调度事件的所有类的基类。
 	*/
 	//class laya.events.EventDispatcher
@@ -846,6 +672,90 @@ var Laya=window.Laya=(function(window,document){
 		Handler._pool=[];
 		Handler._gid=1;
 		return Handler;
+	})()
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class TestServiceWorker
+	var TestServiceWorker=(function(){
+		function TestServiceWorker(){
+			this.msgTxt=null;
+			Laya.init(1000,900);
+			this.msgTxt=new Text();
+			this.msgTxt.size(1000,600);
+			this.msgTxt.color="#00ff00";
+			Laya.stage.addChild(this.msgTxt);
+			this.showInfo("hello");
+			Laya.timer.frameOnce(1,this,this.initServiceWorker);
+		}
+
+		__class(TestServiceWorker,'TestServiceWorker');
+		var __proto=TestServiceWorker.prototype;
+		//initServiceWorker();
+		__proto.initServiceWorker=function(){
+			this.showInfo("try initServiceWorker");
+			ServiceWorkerTools.I.on("onmessage",this,this.onMessage);
+			ServiceWorkerTools.I.register(new Handler(this,this.serviceWorkerInited));
+		}
+
+		__proto.onMessage=function(event){
+			this.showInfo(JSON.Stringfy(event.data));
+		}
+
+		__proto.serviceWorkerInited=function(){
+			this.showInfo("serviceWorkerInited from client");
+			this.test();
+		}
+
+		__proto.showInfo=function(info){
+			if (!this.msgTxt)
+				return;
+			this.msgTxt.text+="\n"+info;
+			console.log(info);
+		}
+
+		__proto.test=function(){
+			var imgs=["res/tt/clip_num.png","res/pics/g1.png","res/pics/g2.png","res/pics/g3.png","res/pics/g4.png","res/pics/gg1.png","res/pics/gg2.png","res/image.png","res/image.png","res/image.png","res/btn_close.png","res/clip_num.png"];
+			var i=0,len=0;
+			len=imgs.length;
+			var xCount=6;
+			var tX=NaN;
+			var tY=NaN;
+			for (i=0;i < len;i++){
+				var img;
+				img=new Image();
+				img.skin=imgs[i];
+				tX=(i % xCount)*150;
+				tY=Math.floor(i/xCount)*200;
+				img.pos(tX,tY);
+				Laya.stage.addChild(img);
+			}
+		}
+
+		return TestServiceWorker;
+	})()
+
+
+	/**
+	*Config 用于配置一些全局参数。
+	*/
+	//class Config
+	var Config=(function(){
+		function Config(){};
+		__class(Config,'Config');
+		Config.WebGLTextCacheCount=500;
+		Config.atlasEnable=false;
+		Config.showCanvasMark=false;
+		Config.CPUMemoryLimit=120 *1024 *1024;
+		Config.GPUMemoryLimit=160 *1024 *1024;
+		Config.animationInterval=50;
+		Config.isAntialias=false;
+		Config.isAlpha=false;
+		Config.premultipliedAlpha=false;
+		return Config;
 	})()
 
 
@@ -8055,6 +7965,104 @@ var Laya=window.Laya=(function(window,document){
 		]);
 		return UIUtils;
 	})()
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class laya.workers.ServiceWorkerTools extends laya.events.EventDispatcher
+	var ServiceWorkerTools=(function(_super){
+		function ServiceWorkerTools(){
+			this.messageChannel=null;
+			this._workDoneHandler=null;
+			ServiceWorkerTools.__super.call(this);
+			var _$this=this;
+			this.messageChannel=new MessageChannel();;
+			this.messageChannel.port1.onmessage=function (event){
+				_$this._onMessage(event);
+			};
+		}
+
+		__class(ServiceWorkerTools,'laya.workers.ServiceWorkerTools',_super);
+		var __proto=ServiceWorkerTools.prototype;
+		__proto._onMessage=function(event){
+			if (event && event.data){
+				switch(event.data.msg){
+					case "reloadSuccess":
+						this._workDoneCall();
+						break ;
+					case "reloadFail":
+						this._workDoneCall();
+						break ;
+					}
+			}
+			event("onmessage",event);
+		}
+
+		__proto.sendMessage=function(message){
+			if (!ServiceWorkerTools.isServiceWorkerSupport)
+				return;
+			if (Browser.window.navigator.serviceWorker.controller){
+				Browser.window.navigator.serviceWorker.controller.postMessage(message,[this.messageChannel.port2]);
+			}
+			else {
+				console.log("service worker not installed");
+			}
+		}
+
+		__proto._workDoneCall=function(){
+			if (this._workDoneHandler){
+				var tHandler;
+				tHandler=this._workDoneHandler;
+				this._workDoneHandler=null;
+				tHandler.run();
+			}
+		}
+
+		__proto.register=function(workDoneHandler,workerPath,option,forceUpdate){
+			var _$this=this;
+			(workerPath===void 0)&& (workerPath="./service-worker.js");
+			(forceUpdate===void 0)&& (forceUpdate=true);
+			if (!option){
+				option={scope:'./'};
+			}
+			this._workDoneHandler=workDoneHandler;
+			var navigator=Browser.window.navigator;
+			if ('serviceWorker' in navigator){
+				navigator.serviceWorker.register(workerPath,option).then(function(worker){
+					if (worker && forceUpdate){
+						worker.update();
+					}
+					if (navigator.serviceWorker.controller){
+						console.log('service worker is working');
+						_$this.sendMessage({"cmd":"reloadConfig"});
+					}
+					else {
+						console.log('starting service worker');
+						_$this._workDoneCall();
+					}
+					}).catch(function(error){
+					console.log(error);
+					_$this._workDoneCall();
+				});
+			}
+			else {
+				console.log('Service workers are not supported in the current browser.');
+				this._workDoneCall();
+			}
+		}
+
+		__getset(1,ServiceWorkerTools,'isServiceWorkerSupport',function(){
+			return 'serviceWorker' in Browser.window.navigator;
+		},laya.events.EventDispatcher._$SET_isServiceWorkerSupport);
+
+		ServiceWorkerTools.ON_MESSAGE="onmessage";
+		__static(ServiceWorkerTools,
+		['I',function(){return this.I=new ServiceWorkerTools();}
+		]);
+		return ServiceWorkerTools;
+	})(EventDispatcher)
 
 
 	/**
@@ -15364,6 +15372,116 @@ var Laya=window.Laya=(function(window,document){
 
 
 	/**
+	*<code>HTMLImage</code> 用于创建 HTML Image 元素。
+	*@private
+	*/
+	//class laya.resource.HTMLImage extends laya.resource.FileBitmap
+	var HTMLImage=(function(_super){
+		function HTMLImage(src,def){
+			this._recreateLock=false;
+			this._needReleaseAgain=false;
+			HTMLImage.__super.call(this);
+			this._init_(src,def);
+		}
+
+		__class(HTMLImage,'laya.resource.HTMLImage',_super);
+		var __proto=HTMLImage.prototype;
+		__proto._init_=function(src,def){
+			this._src=src;
+			this._source=new Browser.window.Image();
+			if (def){
+				def.onload && (this.onload=def.onload);
+				def.onerror && (this.onerror=def.onerror);
+				def.onCreate && def.onCreate(this);
+			}
+			if (src.indexOf("data:image")!=0)this._source.crossOrigin="";
+			(src)&& (this._source.src=src);
+		}
+
+		/**
+		*@inheritDoc
+		*/
+		__proto.recreateResource=function(){
+			var _$this=this;
+			if (this._src==="")
+				throw new Error("src no null！");
+			this._needReleaseAgain=false;
+			if (!this._source){
+				this._recreateLock=true;
+				this.startCreate();
+				var _this=this;
+				this._source=new Browser.window.Image();
+				this._source.crossOrigin="";
+				this._source.onload=function (){
+					if (_this._needReleaseAgain){
+						_this._needReleaseAgain=false;
+						_this._source.onload=null;
+						_this._source=null;
+						return;
+					}
+					_this._source.onload=null;
+					_this.memorySize=_$this._w *_$this._h *4;
+					_this._recreateLock=false;
+					_this.completeCreate();
+				};
+				this._source.src=this._src;
+				}else {
+				if (this._recreateLock)
+					return;
+				this.startCreate();
+				this.memorySize=this._w *this._h *4;
+				this._recreateLock=false;
+				this.completeCreate();
+			}
+		}
+
+		/**
+		*@inheritDoc
+		*/
+		__proto.detoryResource=function(){
+			if (this._recreateLock)
+				this._needReleaseAgain=true;
+			(this._source)&& (this._source=null,this.memorySize=0);
+		}
+
+		/***调整尺寸。*/
+		__proto.onresize=function(){
+			this._w=this._source.width;
+			this._h=this._source.height;
+		}
+
+		/**
+		*@inheritDoc
+		*/
+		__getset(0,__proto,'onload',null,function(value){
+			var _$this=this;
+			this._onload=value;
+			this._source && (this._source.onload=this._onload !=null ? (function(){
+				_$this.onresize();
+				_$this._onload();
+			}):null);
+		});
+
+		/**
+		*@inheritDoc
+		*/
+		__getset(0,__proto,'onerror',null,function(value){
+			var _$this=this;
+			this._onerror=value;
+			this._source && (this._source.onerror=this._onerror !=null ? (function(){
+				_$this._onerror()
+			}):null);
+		});
+
+		HTMLImage.create=function(src,def){
+			return new HTMLImage(src,def);
+		}
+
+		return HTMLImage;
+	})(FileBitmap)
+
+
+	/**
 	*<code>Image</code> 类是用于表示位图图像或绘制图形的显示对象。
 	*@example 以下示例代码，创建了一个新的 <code>Image</code> 实例，设置了它的皮肤、位置信息，并添加到舞台上。
 	*<listing version="3.0">
@@ -15572,117 +15690,7 @@ var Laya=window.Laya=(function(window,document){
 	})(Component)
 
 
-	/**
-	*<code>HTMLImage</code> 用于创建 HTML Image 元素。
-	*@private
-	*/
-	//class laya.resource.HTMLImage extends laya.resource.FileBitmap
-	var HTMLImage=(function(_super){
-		function HTMLImage(src,def){
-			this._recreateLock=false;
-			this._needReleaseAgain=false;
-			HTMLImage.__super.call(this);
-			this._init_(src,def);
-		}
-
-		__class(HTMLImage,'laya.resource.HTMLImage',_super);
-		var __proto=HTMLImage.prototype;
-		__proto._init_=function(src,def){
-			this._src=src;
-			this._source=new Browser.window.Image();
-			if (def){
-				def.onload && (this.onload=def.onload);
-				def.onerror && (this.onerror=def.onerror);
-				def.onCreate && def.onCreate(this);
-			}
-			if (src.indexOf("data:image")!=0)this._source.crossOrigin="";
-			(src)&& (this._source.src=src);
-		}
-
-		/**
-		*@inheritDoc
-		*/
-		__proto.recreateResource=function(){
-			var _$this=this;
-			if (this._src==="")
-				throw new Error("src no null！");
-			this._needReleaseAgain=false;
-			if (!this._source){
-				this._recreateLock=true;
-				this.startCreate();
-				var _this=this;
-				this._source=new Browser.window.Image();
-				this._source.crossOrigin="";
-				this._source.onload=function (){
-					if (_this._needReleaseAgain){
-						_this._needReleaseAgain=false;
-						_this._source.onload=null;
-						_this._source=null;
-						return;
-					}
-					_this._source.onload=null;
-					_this.memorySize=_$this._w *_$this._h *4;
-					_this._recreateLock=false;
-					_this.completeCreate();
-				};
-				this._source.src=this._src;
-				}else {
-				if (this._recreateLock)
-					return;
-				this.startCreate();
-				this.memorySize=this._w *this._h *4;
-				this._recreateLock=false;
-				this.completeCreate();
-			}
-		}
-
-		/**
-		*@inheritDoc
-		*/
-		__proto.detoryResource=function(){
-			if (this._recreateLock)
-				this._needReleaseAgain=true;
-			(this._source)&& (this._source=null,this.memorySize=0);
-		}
-
-		/***调整尺寸。*/
-		__proto.onresize=function(){
-			this._w=this._source.width;
-			this._h=this._source.height;
-		}
-
-		/**
-		*@inheritDoc
-		*/
-		__getset(0,__proto,'onload',null,function(value){
-			var _$this=this;
-			this._onload=value;
-			this._source && (this._source.onload=this._onload !=null ? (function(){
-				_$this.onresize();
-				_$this._onload();
-			}):null);
-		});
-
-		/**
-		*@inheritDoc
-		*/
-		__getset(0,__proto,'onerror',null,function(value){
-			var _$this=this;
-			this._onerror=value;
-			this._source && (this._source.onerror=this._onerror !=null ? (function(){
-				_$this._onerror()
-			}):null);
-		});
-
-		HTMLImage.create=function(src,def){
-			return new HTMLImage(src,def);
-		}
-
-		return HTMLImage;
-	})(FileBitmap)
-
-
-	Laya.__init([EventDispatcher,Render,Timer,LoaderManager,LocalStorage,Browser]);
+	Laya.__init([EventDispatcher,Browser,Render,Timer,LoaderManager,LocalStorage]);
 	new TestServiceWorker();
 
 })(window,document,Laya);

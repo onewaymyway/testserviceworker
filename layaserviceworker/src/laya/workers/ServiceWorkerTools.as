@@ -1,4 +1,5 @@
 package laya.workers {
+	import laya.events.EventDispatcher;
 	import laya.utils.Browser;
 	import laya.utils.Handler;
 	
@@ -6,12 +7,12 @@ package laya.workers {
 	 * ...
 	 * @author ww
 	 */
-	public class ServiceWorkerTools {
+	public class ServiceWorkerTools extends EventDispatcher {
 		public static function get isServiceWorkerSupport():Boolean {
 			return 'serviceWorker' in Browser.window.navigator;
 		}
 		public static var I:ServiceWorkerTools = new ServiceWorkerTools();
-		
+		public static const ON_MESSAGE:String = "onmessage";
 		public var messageChannel:*;
 		
 		public function ServiceWorkerTools() {
@@ -35,6 +36,8 @@ package laya.workers {
 						break;
 				}
 			}
+			event(ON_MESSAGE, event);
+			
 		}
 		public function sendMessage(message:*) {
 			

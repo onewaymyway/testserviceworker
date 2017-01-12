@@ -317,13 +317,15 @@ self.addEventListener('message', function (event) {
           function () {
             //刷新成功
             event.ports[0].postMessage({
-              msg: "reloadSuccess"
+              msg: "reloadSuccess",
+              ver:fileVer
             });
           },
           function () {
             //刷新失败
             event.ports[0].postMessage({
-              msg: "reloadFail"
+              msg: "reloadFail",
+              ver:fileVer
             });
           }
         );

@@ -27,9 +27,14 @@ package {
 		
 		private function initServiceWorker():void {
 			showInfo("try initServiceWorker");
+			ServiceWorkerTools.I.on(ServiceWorkerTools.ON_MESSAGE, this, onMessage);
 			ServiceWorkerTools.I.register(new Handler(this, serviceWorkerInited));
 		}
 		
+		private function onMessage(event:*):void
+		{
+			showInfo(JSON.Stringfy(event.data));
+		}
 		private function serviceWorkerInited():void {
 			showInfo("serviceWorkerInited from client");
 			test();
