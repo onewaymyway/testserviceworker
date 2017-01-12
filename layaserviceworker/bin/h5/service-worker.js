@@ -92,7 +92,7 @@ function reloadConfigAndClearPre() {
           cache.keys().then(function (cacheNames) {
             return Promise.all(
               cacheNames.map(function (tRequest) {
-                var cacheName=tRequest.url;
+                var cacheName = tRequest.url;
                 console.log("work with:", cacheName);
                 if (cacheName.indexOf("?") > 0) {
                   tPureName = getPureRelativePath(cacheName);
@@ -186,7 +186,13 @@ self.addEventListener('fetch', function (event) {
 });
 
 
-self.addEventListener('message', function(event) {
+self.addEventListener('message', function (event) {
   console.log('Handling message event:', event);
-  
+  if (event.data) {
+    switch (event.data.cmd) {
+      case "reloadConfig":
+        reloadConfigAndClearPre();
+        break;
+    }
+  }
 });
