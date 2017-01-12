@@ -740,7 +740,7 @@ var Laya=window.Laya=(function(window,document){
 			for (i=0;i < len;i++){
 				tX=(i % xCount)*150;
 				tY=Math.floor(i / xCount)*200;
-				Laya.timer.once(1000*i,this,this.createI,[tX,tY,imgs[i]],false);
+				this.createI(tX,tY,imgs[i]);
 			}
 		}
 

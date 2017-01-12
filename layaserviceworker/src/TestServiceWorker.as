@@ -79,7 +79,8 @@ package {
 				//img.skin = imgs[i];
 				tX = (i % xCount) * 150;
 				tY = Math.floor(i / xCount) * 200;
-				Laya.timer.once(1000*i, this, createI, [tX,tY,imgs[i]], false);
+				//Laya.timer.once(1000 * i, this, createI, [tX, tY, imgs[i]], false);
+				createI(tX,tY,imgs[i]);
 			}
 		
 		}
