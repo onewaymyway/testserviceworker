@@ -91,7 +91,8 @@ function reloadConfigAndClearPre() {
         function (cache) {
           cache.keys().then(function (cacheNames) {
             return Promise.all(
-              cacheNames.map(function (cacheName) {
+              cacheNames.map(function (tRequest) {
+                var cacheName=tRequest.url;
                 console.log("work with:", cacheName);
                 if (cacheName.indexOf("?") > 0) {
                   tPureName = getPureRelativePath(cacheName);
@@ -100,7 +101,7 @@ function reloadConfigAndClearPre() {
                     console.log('cache is ok:', cacheName);
                   } else {
                     console.log('cache is old:', cacheName);
-                    return cache.delete(cacheName);
+                    return cache.delete(tRequest);
                   }
                 }
               })
