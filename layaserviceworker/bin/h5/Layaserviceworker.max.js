@@ -699,7 +699,12 @@ var Laya=window.Laya=(function(window,document){
 		__proto.initServiceWorker=function(){
 			this.showInfo("try initServiceWorker");
 			ServiceWorkerTools.I.on("onmessage",this,this.onMessage);
+			ServiceWorkerTools.I.on("work_info",this,this.onInfo);
 			ServiceWorkerTools.I.register(new Handler(this,this.serviceWorkerInited));
+		}
+
+		__proto.onInfo=function(info){
+			this.showInfo(info);
 		}
 
 		__proto.onMessage=function(event){
@@ -8003,6 +8008,11 @@ var Laya=window.Laya=(function(window,document){
 			this.event("onmessage",event);
 		}
 
+		__proto._traceWorkInfo=function(info){
+			console.log(info);
+			this.event("work_info",info);
+		}
+
 		__proto.sendMessage=function(message){
 			if (!ServiceWorkerTools.isServiceWorkerSupport)
 				return;
@@ -8010,7 +8020,7 @@ var Laya=window.Laya=(function(window,document){
 				Browser.window.navigator.serviceWorker.controller.postMessage(message,[this.messageChannel.port2]);
 			}
 			else {
-				console.log("service worker not installed");
+				this._traceWorkInfo("service worker not installed");
 			}
 		}
 
@@ -8034,15 +8044,13 @@ var Laya=window.Laya=(function(window,document){
 			var navigator=Browser.window.navigator;
 			if ('serviceWorker' in navigator){
 				navigator.serviceWorker.register(workerPath,option).then(function(worker){
-					if (worker && forceUpdate){
-						worker.update();
-					}
-					if (navigator.serviceWorker.controller){
-						console.log('service worker is working');
+					if (worker && forceUpdate){}
+						if (navigator.serviceWorker.controller){
+						_$this._traceWorkInfo('service worker is working');
 						_$this.sendMessage({"cmd":"reloadConfig"});
 					}
 					else {
-						console.log('starting service worker');
+						_$this._traceWorkInfo('starting service worker');
 						_$this._workDoneCall();
 					}
 					}).catch(function(error){
@@ -8051,7 +8059,7 @@ var Laya=window.Laya=(function(window,document){
 				});
 			}
 			else {
-				console.log('Service workers are not supported in the current browser.');
+				this._traceWorkInfo('Service workers are not supported in the current browser.');
 				this._workDoneCall();
 			}
 		}
@@ -8061,6 +8069,7 @@ var Laya=window.Laya=(function(window,document){
 		},laya.events.EventDispatcher._$SET_isServiceWorkerSupport);
 
 		ServiceWorkerTools.ON_MESSAGE="onmessage";
+		ServiceWorkerTools.WORK_INFO="work_info";
 		__static(ServiceWorkerTools,
 		['I',function(){return this.I=new ServiceWorkerTools();}
 		]);

@@ -13,6 +13,7 @@ package laya.workers {
 		}
 		public static var I:ServiceWorkerTools = new ServiceWorkerTools();
 		public static const ON_MESSAGE:String = "onmessage";
+		public static const WORK_INFO:String = "work_info";
 		public var messageChannel:*;
 		
 		public function ServiceWorkerTools() {
@@ -39,6 +40,11 @@ package laya.workers {
 			this.event(ON_MESSAGE, event);
 			
 		}
+		private function _traceWorkInfo(info:String):void
+		{
+			trace(info);
+			this.event(WORK_INFO, info);
+		}
 		public function sendMessage(message:*) {
 			
 			if (!isServiceWorkerSupport)
@@ -47,7 +53,7 @@ package laya.workers {
 				Browser.window.navigator.serviceWorker.controller.postMessage(message,[messageChannel.port2]);
 			}
 			else {
-				trace("service worker not installed");
+				_traceWorkInfo("service worker not installed");
 			}
 		}
 		private var _workDoneHandler:Handler;
@@ -71,16 +77,16 @@ package laya.workers {
 			if ('serviceWorker' in navigator) {
 				navigator.serviceWorker.register(workerPath, option).then(function(worker:*) {
 						if (worker && forceUpdate) {
-							worker.update();
+							//worker.update();
 						}
 						// Registration was successful. Now, check to see whether the service worker is controlling the page.
 						if (navigator.serviceWorker.controller) {
 							// If .controller is set, then this page is being actively controlled by the service worker.
-							trace('service worker is working');
+							_traceWorkInfo('service worker is working');
 							sendMessage({"cmd": "reloadConfig"});
 						}
 						else {
-							trace('starting service worker');
+							_traceWorkInfo('starting service worker');
 							_workDoneCall();
 						}
 					}).catch(function(error:*) {
@@ -92,7 +98,7 @@ package laya.workers {
 			}
 			else {
 				// The current browser doesn't support service workers.
-				trace('Service workers are not supported in the current browser.');
+				_traceWorkInfo('Service workers are not supported in the current browser.');
 				_workDoneCall();
 			}
 		}

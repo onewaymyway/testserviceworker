@@ -29,9 +29,13 @@ package {
 		private function initServiceWorker():void {
 			showInfo("try initServiceWorker");
 			ServiceWorkerTools.I.on(ServiceWorkerTools.ON_MESSAGE, this, onMessage);
+			ServiceWorkerTools.I.on(ServiceWorkerTools.WORK_INFO, this, onInfo);
 			ServiceWorkerTools.I.register(new Handler(this, serviceWorkerInited));
 		}
-		
+		private function onInfo(info:String):void
+		{
+			showInfo(info);
+		}
 		private function onMessage(event:*):void
 		{
 			showInfo("onMessage:");
