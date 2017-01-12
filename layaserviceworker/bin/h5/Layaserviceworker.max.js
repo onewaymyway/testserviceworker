@@ -7999,7 +7999,7 @@ var Laya=window.Laya=(function(window,document){
 		var __proto=ServiceWorkerTools.prototype;
 		__proto._onMessage=function(event){
 			if (event && event.data){
-				switch(event.data.msg){
+				switch (event.data.msg){
 					case "reloadSuccess":
 						this._workDoneCall();
 						break ;
@@ -8056,9 +8056,15 @@ var Laya=window.Laya=(function(window,document){
 						_$this._traceWorkInfo('starting service worker');
 						_$this._workDoneCall();
 					}
+					navigator.serviceWorker.controller.addEventListener('statechange',function(){
+						_$this._traceWorkInfo("状态发生变化");
+					});
 					}).catch(function(error){
 					_$this._traceWorkInfo(error);
 					_$this._workDoneCall();
+				});
+				navigator.serviceWorker.addEventListener('controllerchange',function(){
+					_$this._traceWorkInfo("controllerchange");
 				});
 			}
 			else {

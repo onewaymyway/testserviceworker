@@ -124,6 +124,7 @@ function getUrlVer(tPath) {
 self.addEventListener('install',
   function (event) {
     console.log("install");
+    self.skipWaiting();
     //event.waitUntil(
 
     //);

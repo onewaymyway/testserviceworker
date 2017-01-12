@@ -22,45 +22,43 @@ package laya.workers {
 				_onMessage(event);
 			};
 		}
-		private function _onMessage(event:*):void
-		{
+		
+		private function _onMessage(event:*):void {
 			//trace("onMessage:", event);
-			if (event && event.data)
-			{
-				switch(event.data.msg)
-				{
-					case "reloadSuccess":
+			if (event && event.data) {
+				switch (event.data.msg) {
+					case "reloadSuccess": 
 						_workDoneCall();
 						break;
-					case "reloadFail":
+					case "reloadFail": 
 						_workDoneCall();
 						break;
 				}
 			}
 			this.event(ON_MESSAGE, event);
-			
+		
 		}
-		private function _traceWorkInfo(info:String):void
-		{
+		
+		private function _traceWorkInfo(info:String):void {
 			trace(info);
 			this.event(WORK_INFO, info);
 		}
+		
 		public function sendMessage(message:*) {
 			
 			if (!isServiceWorkerSupport)
 				return;
 			if (Browser.window.navigator.serviceWorker.controller) {
-				Browser.window.navigator.serviceWorker.controller.postMessage(message,[messageChannel.port2]);
+				Browser.window.navigator.serviceWorker.controller.postMessage(message, [messageChannel.port2]);
 			}
 			else {
 				_traceWorkInfo("service worker not installed");
 			}
 		}
 		private var _workDoneHandler:Handler;
-		private function _workDoneCall():void
-		{
-			if (_workDoneHandler)
-			{
+		
+		private function _workDoneCall():void {
+			if (_workDoneHandler) {
 				var tHandler:Handler;
 				tHandler = _workDoneHandler;
 				_workDoneHandler = null;
@@ -68,7 +66,8 @@ package laya.workers {
 				
 			}
 		}
-		public function register(workDoneHandler:Handler=null,workerPath:String="./service-worker.js", option:Object = null, forceUpdate:Boolean = true):* {
+		
+		public function register(workDoneHandler:Handler = null, workerPath:String = "./service-worker.js", option:Object = null, forceUpdate:Boolean = true):* {
 			if (!option) {
 				option = {scope: './'};
 			}
@@ -89,11 +88,19 @@ package laya.workers {
 							_traceWorkInfo('starting service worker');
 							_workDoneCall();
 						}
+						navigator.serviceWorker.controller.addEventListener('statechange', function() {
+							// newWorker 状态发生变化
+								_traceWorkInfo("状态发生变化");
+							});
 					}).catch(function(error:*) {
 						// Something went wrong during registration. The service-worker.js file
 						// might be unavailable or contain a syntax error.
 						_traceWorkInfo(error);
 						_workDoneCall();
+					});
+				navigator.serviceWorker.addEventListener('controllerchange', function() {
+					// 当 SW controlling 变化时被触发，比如新的 SW skippedWaiting 成为一个新的被激活的 SW
+					_traceWorkInfo("controllerchange");
 					});
 			}
 			else {
