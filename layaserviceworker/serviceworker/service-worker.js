@@ -31,8 +31,26 @@ var fileVerFilePath = "fileconfig.json";
  * 文件版本数据
  */
 var verdata = {};
+/**
+ * 开启调试功能
+ */
+var enableDebug = True;
+/**
+ * 调试信息输出端口
+ */
+var tarPort;
 
-
+/**
+ * 调试输出
+ * 
+ */
+function debugTrace(msg) {
+  if (!enableDebug || !tarPort) return;
+  tarPort.postMessage({
+    msg: "debugTrace",
+    info: msg
+  });
+}
 
 /**
  * 获取相对路径
@@ -118,7 +136,7 @@ self.addEventListener('install',
  */
 function reloadConfigAndClearPre() {
   //加载worker配置文件
-  return fetch("./workerconfig.json?ver="+Math.random()).then(
+  return fetch("./workerconfig.json?ver=" + Math.random()).then(
     function (response) {
       return response.json();
     }
@@ -131,7 +149,7 @@ function reloadConfigAndClearPre() {
       myPath = data["workerPath"];
       urlBasePath = location.href.replace(myPath, "");
       fileVer = data["fileVer"]
-      console.log("fileVer",fileVer);
+      console.log("fileVer", fileVer);
       return data;
     }).then(function () {
       //获取文件版本信息数据
@@ -178,9 +196,9 @@ function reloadConfigAndClearPre() {
                 )
             }
             //从网络加载最新的文件版本数据
-            
+
             var fileConfigRq = new Request(getVersionPath(fileVerFilePath, fileVer));
-            console.log("get new fileVerData",fileConfigRq.url);
+            console.log("get new fileVerData", fileConfigRq.url);
             return fetch(fileConfigRq.clone()).then(
               function (response) {
                 console.log("get new fileVerData success");
@@ -194,7 +212,7 @@ function reloadConfigAndClearPre() {
       )
     }).then(
     function (data) {
-      console.log("load fileConfig success:", data,JSON.stringify(data));
+      console.log("load fileConfig success:", data, JSON.stringify(data));
       verdata = data;
       return data;
     }).then(
@@ -247,7 +265,7 @@ self.addEventListener('activate', function (event) {
  * 
  */
 self.addEventListener('fetch', function (event) {
-  console.log("fetch:",event.request.url);
+  debugTrace("fetch:", event.request.url);
   var tPurePath = getPureRelativePath(event.request.url);
   if (verdata && verdata[tPurePath]) {
     //如果是受版本管理的文件,从缓存中查找
@@ -313,19 +331,22 @@ self.addEventListener('message', function (event) {
   if (event.data) {
     switch (event.data.cmd) {
       case "reloadConfig"://刷新数据
+        if (enableDebug) {
+          tarPort = event.ports[0];
+        }
         reloadConfigAndClearPre().then(
           function () {
             //刷新成功
             event.ports[0].postMessage({
               msg: "reloadSuccess",
-              ver:fileVer
+              ver: fileVer
             });
           },
           function () {
             //刷新失败
             event.ports[0].postMessage({
               msg: "reloadFail",
-              ver:fileVer
+              ver: fileVer
             });
           }
         );
