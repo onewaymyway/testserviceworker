@@ -59,11 +59,9 @@ function getAdptRequest(preRequest) {
   adptRequest = new Request(adptPath);
   return adptRequest;
 }
-function getUrlVer(tPath)
-{
-  if(tPath.indexOf("?ver=")>0)
-  {
-    var tStr=tPath.split("?ver=")[1];
+function getUrlVer(tPath) {
+  if (tPath.indexOf("?ver=") > 0) {
+    var tStr = tPath.split("?ver=")[1];
     return tStr;
 
   }
@@ -84,31 +82,33 @@ function reloadConfigAndClearPre() {
     }
   ).then(
     function (data) {
-      console.log("load fileConfig success:",data);
+      console.log("load fileConfig success:", data);
       self.verdata = data;
       return data;
     }).then(
     function () {
-      caches.keys().then(function (cacheNames) {
-        return Promise.all(
-          cacheNames.map(function (cacheName) {
-            console.log("work with:",cacheName);
-            if(cacheName.indexOf("?")>0)
-            {
-              tPureName=getPureRelativePath(cacheName);
-              tVer=getUrlVer(cacheName);
-              if(self.verdata[tPureName]&&self.verdata[tPureName]==tVer)
-              {
-                 console.log('cache is ok:', cacheName);
-              }else
-              {
-                 console.log('cache is old:', cacheName);
-                 return caches.delete(cacheName);
-              }
-            }
+      return caches.open(CACHE_SIGN).then(
+        function (cache) {
+          cache.keys().then(function (cacheNames) {
+            return Promise.all(
+              cacheNames.map(function (cacheName) {
+                console.log("work with:", cacheName);
+                if (cacheName.indexOf("?") > 0) {
+                  tPureName = getPureRelativePath(cacheName);
+                  tVer = getUrlVer(cacheName);
+                  if (self.verdata[tPureName] && self.verdata[tPureName] == tVer) {
+                    console.log('cache is ok:', cacheName);
+                  } else {
+                    console.log('cache is old:', cacheName);
+                    return cache.delete(cacheName);
+                  }
+                }
+              })
+            );
           })
-        );
-      })
+        }
+      )
+
     }
     ).catch(
     function (e) {
