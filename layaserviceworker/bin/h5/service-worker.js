@@ -82,7 +82,7 @@ function getAdptRequest(preRequest) {
   //adptRequest=preRequest.clone();
   //adptRequest.url=adptPath;
   adptRequest = new Request(adptPath);
-  adptRequest.method=adptPath.method;
+  //adptRequest.method=adptPath.method;
   return adptRequest;
 }
 
