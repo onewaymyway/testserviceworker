@@ -268,9 +268,9 @@ self.addEventListener('activate', function (event) {
 self.addEventListener('fetch', function (event) {
   debugTrace("fetch:" + event.request.url);
    //返回结果
-  return event.respondWith(
-    goPass(event.request)
-  );
+  //return event.respondWith(
+  //  goPass(event.request)
+ // );
   
   //return goPass(event.request);
   var tPurePath = getPureRelativePath(event.request.url);

@@ -8055,15 +8055,15 @@ var Laya=window.Laya=(function(window,document){
 					if (worker && forceUpdate){}
 						if (navigator.serviceWorker.controller){
 						_$this._traceWorkInfo('service worker is working');
-						_$this.sendMessage({"cmd":"reloadConfig"});
+						_$this.sendMessage({"cmd":"reloadConfig" });
+						navigator.serviceWorker.controller.addEventListener('statechange',function(){
+							_$this._traceWorkInfo("状态发生变化");
+						});
 					}
 					else {
 						_$this._traceWorkInfo('starting service worker');
 						_$this._workDoneCall();
 					}
-					navigator.serviceWorker.controller.addEventListener('statechange',function(){
-						_$this._traceWorkInfo("状态发生变化");
-					});
 					}).catch(function(error){
 					_$this._traceWorkInfo(error);
 					_$this._workDoneCall();

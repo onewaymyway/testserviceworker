@@ -82,16 +82,17 @@ package laya.workers {
 						if (navigator.serviceWorker.controller) {
 							// If .controller is set, then this page is being actively controlled by the service worker.
 							_traceWorkInfo('service worker is working');
-							sendMessage({"cmd": "reloadConfig"});
+							sendMessage( { "cmd": "reloadConfig" } );
+							navigator.serviceWorker.controller.addEventListener('statechange', function() {
+							// newWorker 状态发生变化
+								_traceWorkInfo("状态发生变化");
+							});
 						}
 						else {
 							_traceWorkInfo('starting service worker');
 							_workDoneCall();
 						}
-						navigator.serviceWorker.controller.addEventListener('statechange', function() {
-							// newWorker 状态发生变化
-								_traceWorkInfo("状态发生变化");
-							});
+						
 					}).catch(function(error:*) {
 						// Something went wrong during registration. The service-worker.js file
 						// might be unavailable or contain a syntax error.
