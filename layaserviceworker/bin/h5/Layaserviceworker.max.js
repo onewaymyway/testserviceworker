@@ -387,19 +387,53 @@ var Laya=window.Laya=(function(window,document){
 	*/
 	//class laya.workers.ServiceWorkerTools
 	var ServiceWorkerTools=(function(){
-		function ServiceWorkerTools(){}
+		function ServiceWorkerTools(){
+			this.messageChannel=null;
+			this._workDoneHandler=null;
+			var _$this=this;
+			this.messageChannel=new MessageChannel();;
+			this.messageChannel.port1.onmessage=function (event){
+				_$this._onMessage(event);
+			};
+		}
+
 		__class(ServiceWorkerTools,'laya.workers.ServiceWorkerTools');
 		var __proto=ServiceWorkerTools.prototype;
+		__proto._onMessage=function(event){
+			console.log("onMessage:",event);
+			if (event && event.data){
+				switch(event.data.msg){
+					case "reloadSuccess":
+						this._workDoneCall();
+						break ;
+					case "reloadFail":
+						this._workDoneCall();
+						break ;
+					}
+			}
+		}
+
 		__proto.sendMessage=function(message){
-			if (!ServiceWorkerTools.isServiceWorkerSupport)return;
+			if (!ServiceWorkerTools.isServiceWorkerSupport)
+				return;
 			if (Browser.window.navigator.serviceWorker.controller){
-				Browser.window.navigator.serviceWorker.controller.postMessage(message);
-				}else{
+				Browser.window.navigator.serviceWorker.controller.postMessage(message,[this.messageChannel.port2]);
+			}
+			else {
 				console.log("service worker not installed");
 			}
 		}
 
-		__proto.register=function(workerPath,option,forceUpdate){
+		__proto._workDoneCall=function(){
+			if (this._workDoneHandler){
+				var tHandler;
+				tHandler=this._workDoneHandler;
+				this._workDoneHandler=null;
+				this._workDoneHandler.run();
+			}
+		}
+
+		__proto.register=function(workerPath,option,workDoneHandler,forceUpdate){
 			var _$this=this;
 			(forceUpdate===void 0)&& (forceUpdate=true);
 			if (!option){
@@ -417,13 +451,16 @@ var Laya=window.Laya=(function(window,document){
 					}
 					else {
 						console.log('Please reload this page to allow the service worker to handle network operations.');
+						_$this._workDoneCall();
 					}
 					}).catch(function(error){
 					console.log(error);
+					_$this._workDoneCall();
 				});
 			}
 			else {
 				console.log('Service workers are not supported in the current browser.');
+				this._workDoneCall();
 			}
 		}
 
@@ -480,8 +517,11 @@ var Laya=window.Laya=(function(window,document){
 
 		__proto.initServiceWorker=function(){
 			this.showInfo("try initServiceWorker");
-			ServiceWorkerTools.I.register('./service-worker.js');
-			return;
+			ServiceWorkerTools.I.register('./service-worker.js',null,new Handler(this,this.serviceWorkerInited));
+		}
+
+		__proto.serviceWorkerInited=function(){
+			this.showInfo("serviceWorkerInited from client");
 		}
 
 		return TestServiceWorker;

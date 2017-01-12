@@ -93,12 +93,12 @@ function reloadConfigAndClearPre() {
             return Promise.all(
               cacheNames.map(function (tRequest) {
                 var cacheName = tRequest.url;
-                console.log("work with:", cacheName);
+                //console.log("work with:", cacheName);
                 if (cacheName.indexOf("?") > 0) {
                   tPureName = getPureRelativePath(cacheName);
                   tVer = getUrlVer(cacheName);
                   if (self.verdata[tPureName] && self.verdata[tPureName] == tVer) {
-                    console.log('cache is ok:', cacheName);
+                   // console.log('cache is ok:', cacheName);
                   } else {
                     console.log('cache is old:', cacheName);
                     return cache.delete(tRequest);
@@ -134,10 +134,7 @@ self.addEventListener('fetch', function (event) {
 
       return cache.match(getAdptRequest(event.request)).then(function (response) {
         if (response) {
-          //&& self.verdata[tPurePath] == getPreCacheVer(tPurePath)
-
-          console.log(' Found response in cache and ver same:', response.url);
-
+          //console.log(' Found response in cache and ver same:', response.url);
           return response;
         }
 
@@ -151,11 +148,11 @@ self.addEventListener('fetch', function (event) {
 
             tPurePath = getPureRelativePath(response.url);
             if (self.verdata && self.verdata[tPurePath]) {
-              console.log('  Caching the response to', event.request.url, response.url);
+              //console.log('  Caching the response to', event.request.url, response.url);
               var cacheResponse = response.clone();
               cache.put(adptRequest.clone(), cacheResponse);
             } else {
-              console.log("not cache for not in verdata resPath:", tResPath, response.url);
+              //console.log("not cache for not in verdata resPath:", tResPath, response.url);
             }
 
           } else {
@@ -191,7 +188,20 @@ self.addEventListener('message', function (event) {
   if (event.data) {
     switch (event.data.cmd) {
       case "reloadConfig":
-        reloadConfigAndClearPre();
+        reloadConfigAndClearPre().then(
+          function ()
+          {
+            event.ports[0].postMessage({
+            msg: "reloadSuccess"
+          });
+          },
+          function()
+          {
+            event.ports[0].postMessage({
+            msg: "reloadFail"
+          });
+          }
+        );
         break;
     }
   }
