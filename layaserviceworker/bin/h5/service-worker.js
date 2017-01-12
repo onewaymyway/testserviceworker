@@ -122,7 +122,7 @@ function reloadConfigAndClearPre() {
               }
             }
             // return fileVerDataOK;
-             console.log("fileVerDataOK:",fileVerDataOK);
+            console.log("fileVerDataOK:", fileVerDataOK);
             if (fileVerDataOK) {
               //如果缓存中的版本数据是最新的 直接使用缓存数据
               console.log("use cached fileVerData");
@@ -217,7 +217,7 @@ self.addEventListener('fetch', function (event) {
 
             tPurePath = getPureRelativePath(response.url);
             if (self.verdata && self.verdata[tPurePath]) {
-              //console.log('  Caching the response to', event.request.url, response.url);
+              console.log('  Caching the response to', event.request.url, response.url);
               var cacheResponse = response.clone();
               cache.put(adptRequest.clone(), cacheResponse);
             } else {

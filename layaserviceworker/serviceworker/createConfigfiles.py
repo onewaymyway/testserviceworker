@@ -61,6 +61,7 @@ def createConfigFile():
     f.close();
     
 def beginWork():
+    global gPath,mdData
     initConfig("serviceworkerconfig.json");
     mdData={}
     rPath=os.getcwd();
