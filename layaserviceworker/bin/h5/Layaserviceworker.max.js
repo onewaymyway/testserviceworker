@@ -687,6 +687,7 @@ var Laya=window.Laya=(function(window,document){
 			this.msgTxt=new Text();
 			this.msgTxt.size(1000,600);
 			this.msgTxt.color="#00ff00";
+			this.msgTxt.zOrder=100;
 			Laya.stage.addChild(this.msgTxt);
 			this.showInfo("hello");
 			Laya.timer.frameOnce(1,this,this.initServiceWorker);
