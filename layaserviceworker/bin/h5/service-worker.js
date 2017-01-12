@@ -55,6 +55,14 @@ function getCacheUrl(tPath)
 {
   
 }
+function getAdptRequest(preRequest)
+{
+   tPurePath = getPureRelativePath(preRequest.url);
+   adptPath = getAdptPath(preRequest.url)
+    adptPath+="?ver="+self.verdata[tPurePath];
+    adptRequest = new Request(adptPath);
+    return adptRequest;
+}
 self.addEventListener('install',
   function (event) {
     console.log("install");
@@ -84,15 +92,12 @@ self.addEventListener('activate', function (event) {
 self.addEventListener('fetch', function (event) {
   console.log('Handling fetch event for', event.request.url);
 
-  tPurePath = getPureRelativePath(event.request.url);
+  var tPurePath = getPureRelativePath(event.request.url);
   if (self.verdata&&self.verdata[tPurePath]) {
     
     tPromise = caches.open(CACHE_SIGN).then(function (cache) {
-      adptPath = getAdptPath(event.request.url)
-      adptPath+="?ver="+self.verdata[tPurePath];
-      adptRequest = new Request(adptPath);
-      adptRequest.method = event.request.method;
-      console.log("cache match:",adptRequest.url);
+
+      var adptRequest=getAdptRequest(event.request);
 
       return cache.match(adptRequest).then(function (response) {
         if (response ) {
@@ -104,9 +109,10 @@ self.addEventListener('fetch', function (event) {
         }
 
         console.log(' No response for %s found in cache. About to fetch ' +
-          'from network...', adptRequest.url,event.request.url);
+          'from network...', event.request.url);
+        //adptRequest=getAdptRequest(event.request);
 
-        return fetch(adptRequest.clone()).then(function (response) {
+        return fetch(adptRequest).then(function (response) {
           console.log('  Response for %s from network is: %O',
             adptRequest.url, response,response.url);
 
