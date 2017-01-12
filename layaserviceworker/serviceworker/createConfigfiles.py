@@ -81,9 +81,9 @@ def createConfigFile():
     f.write(json.dumps(configData,sort_keys=True))
     f.close();
     
-def beginWork():
+def beginWork(configPath):
     global gPath,mdData
-    initConfig("serviceworkerconfig.json");
+    initConfig(configPath);
     mdData={}
     rPath=os.getcwd();
     gPath=workPath+"\\"
@@ -95,4 +95,4 @@ def beginWork():
 
     
 if __name__ == "__main__":
-    beginWork();
+    beginWork("serviceworkerconfig.json");
