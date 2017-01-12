@@ -1,6 +1,7 @@
 import os
 import hashlib
 import json
+import shutil
 mdData={}
 configO={}
 gPath=""
@@ -39,8 +40,7 @@ def walk(path):
         if os.path.isdir(os.path.join(path,f)): # if is a dir.      
             walk(os.path.join(path,f))
         else: # if is a file
-            
-            
+                    
             tPath=formatPath(tFilePath)
             mdData[tPath]=getFileMd5(os.path.join(path,f))
             
@@ -60,13 +60,16 @@ def initConfig(filePath):
     excludeFileDic={};
     excludeFileDic["workerconfig.json"]=True;
     excludeFileDic["fileconfig.json"]=True;
+    excludeFileDic[workerPath]=True;
     if "exclude" in jsono:
         excludeList=jsono["exclude"]
         for exfile in excludeList:
             excludeFileDic[exfile]=True
     print(excludeFileDic)
 
-
+def copyWorkerJS():
+    shutil.copyfile("service-worker.js",getWorkPath(workerPath));
+    
 def createFileVerFile():
     f=open(getWorkPath("fileconfig.json"),"w")
     f.write(json.dumps(mdData,sort_keys=True))

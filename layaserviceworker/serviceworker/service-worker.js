@@ -1,43 +1,51 @@
-/*
- Copyright 2014 Google Inc. All Rights Reserved.
- Licensed under the Apache License, Version 2.0 (the "License");
- you may not use this file except in compliance with the License.
- You may obtain a copy of the License at
- http://www.apache.org/licenses/LICENSE-2.0
- Unless required by applicable law or agreed to in writing, software
- distributed under the License is distributed on an "AS IS" BASIS,
- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- See the License for the specific language governing permissions and
- limitations under the License.
-*/
 
-// While overkill for this specific sample in which there is only one cache,
-// this is one best practice that can be followed in general to keep track of
-// multiple caches used by a given service worker, and keep them all versioned.
-// It maps a shorthand identifier for a cache to a specific, versioned cache name.
 
-// Note that since global state is discarded in between service worker restarts, these
-// variables will be reinitialized each time the service worker handles an event, and you
-// should not attempt to change their values inside an event handler. (Treat them as constants.)
-
-// If at any point you want to force pages that use this service worker to start using a fresh
-// cache, then increment the CACHE_VERSION value. It will kick off the service worker update
-// flow and the old cache(s) will be purged as part of the activate event handler when the
-// updated service worker is activated.
-var CACHE_VERSION = 1;
-
+/**
+ * worker配置数据,运行时从服务器加载
+ */
+var workerConfig = {};
+/**
+ * service-worker的相对路径，用来计算主目录的路径
+ * 运行时从workerConfig读取
+ */
 var myPath = "service-worker.js";
+/**
+ * 资源路径的根路径
+ */
 var urlBasePath = location.href.replace(myPath, "");
+/**
+ * Cache的标识符,所有的缓存放在这个标识符指定的缓存中
+ * 运行时从workerConfig读取
+ */
 var CACHE_SIGN = "layaairtest";
+/**
+ * 当前应该获取的最新的文件本版数据文件的版本号
+ * 运行时应该从加载的workerConfig中获取
+ */
+var fileVer = "1.1.1.1";
+/**
+ * 文件版本数据文件的相对路径
+ */
+var fileVerFilePath = "fileconfig.json";
+/**
+ * 文件版本数据
+ */
+var verdata = {};
+
+
+
+/**
+ * 获取相对路径
+ * 
+ */
 function getRelativePath(tPath) {
   return tPath.replace(urlBasePath, "");
 }
-function getPreCacheVer(file) {
-  return localStorage[file];
-}
-function updateCacheVer(file, ver) {
-  localStorage[file] = ver;
-}
+
+/**
+ * 获取不带url参数的相对路径
+ * 
+ */
 function getPureRelativePath(tPath) {
   tPath = getRelativePath(tPath)
   if (tPath.indexOf("?") >= 0) {
@@ -45,20 +53,40 @@ function getPureRelativePath(tPath) {
   }
   return tPath;
 }
+/**
+ * 获取不带url参数的路径
+ * 
+ */
 function getAdptPath(tPath) {
   if (tPath.indexOf("?") >= 0) {
     tPath = tPath.split("?")[0];
   }
   return tPath;
 }
+/**
+ * 获取带版本号的路径
+ * 
+ */
+function getVersionPath(tPath, version) {
+  return tPath + "?ver=" + version;
+}
 
+/**
+ * 获取可用于缓存的Request对象
+ * 
+ */
 function getAdptRequest(preRequest) {
   tPurePath = getPureRelativePath(preRequest.url);
   adptPath = getAdptPath(preRequest.url)
-  adptPath += "?ver=" + self.verdata[tPurePath];
+  adptPath += "?ver=" + verdata[tPurePath];
   adptRequest = new Request(adptPath);
   return adptRequest;
 }
+
+/**
+ * 获取url中的版本信息
+ * 
+ */
 function getUrlVer(tPath) {
   if (tPath.indexOf("?ver=") > 0) {
     var tStr = tPath.split("?ver=")[1];
@@ -67,6 +95,11 @@ function getUrlVer(tPath) {
   }
   return "";
 }
+
+/**
+ * 安装过程
+ * 
+ */
 self.addEventListener('install',
   function (event) {
     console.log("install");
@@ -75,20 +108,95 @@ self.addEventListener('install',
     //);
   });
 
+/**
+ * 更新workConfig
+ * 根据workConfig更新数据
+ * 
+ */
 function reloadConfigAndClearPre() {
-  return fetch("./fileconfig.json").then(
+  //加载worker配置文件
+  return fetch("./workerconfig.json").then(
     function (response) {
       return response.json();
     }
   ).then(
     function (data) {
+      //解析worker配置文件
+      console.log("load workerconfig success:", data);
+      self.workerConfig = data;
+      CACHE_SIGN = data["cacheSign"];
+      myPath = data["workerPath"];
+      urlBasePath = location.href.replace(myPath, "");
+      fileVer = data["fileVer"]
+      return data;
+    }).then(function () {
+      //获取文件版本信息数据
+
+      //尝试在缓存中查找文件版本信息数据
+      return caches.open(CACHE_SIGN).then(
+        function (cache) {
+          return cache.keys().then(function (requestlists) {
+            var fileVerRQ;
+            var tRQ;
+            var tRelativePath;
+            for (i = 0; i < requestlists.length; i++) {
+
+              tRQ = requestlists[i];
+              tRelativePath = getPureRelativePath(tRQ.url)
+              if (tRelativePath == fileVerFilePath) {
+                if (getUrlVer(tRQ.url) == fileVer) {
+                  fileVerRQ = tRQ;
+                } else {
+                  cache.delete(tRQ);
+                }
+
+              }
+            }
+            var fileVerDataOK = false;
+            if (fileVerRQ) {
+              if (getUrlVer(fileVerRQ.url) == fileVer) {
+
+                fileVerDataOK = true;
+              }
+            }
+            // return fileVerDataOK;
+            console.log("fileVerDataOK:", fileVerDataOK);
+            if (fileVerDataOK) {
+              //如果缓存中的版本数据是最新的 直接使用缓存数据
+              console.log("use cached fileVerData");
+              return cache.match(fileVerRQ.clone()).then
+                (
+                function (response) {
+                  console.log("get cached fileVerData success");
+                  return response.json();
+
+                }
+                )
+            }
+            //从网络加载最新的文件版本数据
+            console.log("get new fileVerData");
+            var fileConfigRq = new Request(getVersionPath(fileVerFilePath, fileVer));
+            return fetch(fileConfigRq.clone()).then(
+              function (response) {
+                console.log("get new fileVerData success");
+                cache.put(fileConfigRq.clone(), response.clone())
+                return response.json();
+              }
+            )
+
+          })
+        }
+      )
+    }).then(
+    function (data) {
       console.log("load fileConfig success:", data);
-      self.verdata = data;
+      verdata = data;
       return data;
     }).then(
     function () {
       return caches.open(CACHE_SIGN).then(
         function (cache) {
+          //更新cache中的文件,如果缓存的文件版本号不是最新的就删除缓存
           cache.keys().then(function (cacheNames) {
             return Promise.all(
               cacheNames.map(function (tRequest) {
@@ -97,8 +205,8 @@ function reloadConfigAndClearPre() {
                 if (cacheName.indexOf("?") > 0) {
                   tPureName = getPureRelativePath(cacheName);
                   tVer = getUrlVer(cacheName);
-                  if (self.verdata[tPureName] && self.verdata[tPureName] == tVer) {
-                   // console.log('cache is ok:', cacheName);
+                  if ((tPureName == fileVerFilePath && tVer == fileVer) || (verdata[tPureName] && verdata[tPureName] == tVer)) {
+                    // console.log('cache is ok:', cacheName);
                   } else {
                     console.log('cache is old:', cacheName);
                     return cache.delete(tRequest);
@@ -116,6 +224,11 @@ function reloadConfigAndClearPre() {
       console.log("Oops, error");
     })
 }
+
+/**
+ * 激活之后的处理
+ * 
+ */
 self.addEventListener('activate', function (event) {
   console.log('activate:');
   event.waitUntil(
@@ -123,46 +236,46 @@ self.addEventListener('activate', function (event) {
   );
 });
 
+
+/**
+ * 处理请求
+ * 
+ */
 self.addEventListener('fetch', function (event) {
-  //console.log('Handling fetch event for', event.request.url);
 
   var tPurePath = getPureRelativePath(event.request.url);
-  if (self.verdata && self.verdata[tPurePath]) {
-
+  if (verdata && verdata[tPurePath]) {
+    //如果是受版本管理的文件,从缓存中查找
     tPromise = caches.open(CACHE_SIGN).then(function (cache) {
-
-
       return cache.match(getAdptRequest(event.request)).then(function (response) {
         if (response) {
-          //console.log(' Found response in cache and ver same:', response.url);
+          //缓存数据有效
           return response;
         }
 
-        // console.log(' No response for %s found in cache. About to fetch from network...', event.request.url);
 
+        //没有缓存，从网络加载新的资源，并缓存
         return fetch(getAdptRequest(event.request)).then(function (response) {
-          // console.log('  Response for %s from network is: %O', response,response.url);
           adptRequest = getAdptRequest(event.request);
 
           if (response.status < 400) {
-
+            //如果加载到的数据有效
             tPurePath = getPureRelativePath(response.url);
-            if (self.verdata && self.verdata[tPurePath]) {
-              //console.log('  Caching the response to', event.request.url, response.url);
+            if (verdata && verdata[tPurePath]) {
+              console.log('Caching', event.request.url, response.url);
               var cacheResponse = response.clone();
               cache.put(adptRequest.clone(), cacheResponse);
             } else {
-              //console.log("not cache for not in verdata resPath:", tResPath, response.url);
+              //理论上不该走到这里
             }
 
           } else {
-            console.log('  Not caching the response to', adptRequest.url, response.url);
+            console.log('Not caching', adptRequest.url, response.url);
           }
           return response;
         });
       }).catch(function (error) {
-        console.error('  Error in fetch handler:', error);
-
+        console.error('Error in fetch handler:', error);
         throw error;
       });
     })
@@ -170,36 +283,43 @@ self.addEventListener('fetch', function (event) {
 
   } else {
 
+    //不受管理的请求
     tPromise = fetch(event.request.clone()).then(function (response) {
       return response;
     }).catch(function (error) {
-      console.error('  Error in fetch handler:', error);
+      console.error('Error in fetch handler:', error);
       throw error;
     });
   }
+
+  //返回结果
   event.respondWith(
     tPromise
   );
 });
 
 
+/**
+ * 处理消息
+ * 
+ */
 self.addEventListener('message', function (event) {
-  console.log('Handling message event:', event);
+  //console.log('Handling message event:', event);
   if (event.data) {
     switch (event.data.cmd) {
-      case "reloadConfig":
+      case "reloadConfig"://刷新数据
         reloadConfigAndClearPre().then(
-          function ()
-          {
+          function () {
+            //刷新成功
             event.ports[0].postMessage({
-            msg: "reloadSuccess"
-          });
+              msg: "reloadSuccess"
+            });
           },
-          function()
-          {
+          function () {
+            //刷新失败
             event.ports[0].postMessage({
-            msg: "reloadFail"
-          });
+              msg: "reloadFail"
+            });
           }
         );
         break;
