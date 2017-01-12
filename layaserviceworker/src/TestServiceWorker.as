@@ -52,7 +52,7 @@ package {
 		private function test():void {
 			
 			var imgs:Array = ["res/tt/clip_num.png", "res/pics/g1.png", "res/pics/g2.png", "res/pics/g3.png", "res/pics/g4.png", "res/pics/gg1.png", "res/pics/gg2.png", "res/image.png", "res/image.png", "res/image.png", "res/btn_close.png", "res/clip_num.png"];
-			
+			imgs = ["res/image.png", "res/btn_close.png"];
 			var i:int, len:int;
 			len = imgs.length;
 			var xCount:int = 6;
