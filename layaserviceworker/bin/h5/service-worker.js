@@ -96,7 +96,7 @@ self.addEventListener('fetch', function (event) {
         if (response ) {
           //&& self.verdata[tPurePath] == getPreCacheVer(tPurePath)
 
-          console.log(' Found response in cache and ver same:', response);
+          console.log(' Found response in cache and ver same:', response.url);
 
           return response;
         }
@@ -118,7 +118,7 @@ self.addEventListener('fetch', function (event) {
              //cacheResponse.ver=self.verdata[tPurePath];
               //cacheResponse.headers.set("fileVer",self.verdata[tPurePath]);
               cache.put(adptRequest.clone(), cacheResponse);
-              console.log("cache:",adptRequest.url,cacheResponse)
+              console.log("cache:",adptRequest.url,cacheResponse.url)
               //updateCacheVer(tPurePath, self.verdata[tPurePath])
             } else {
               console.log("not cache for not in verdata resPath:", tResPath);
