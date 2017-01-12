@@ -79,7 +79,9 @@ function getAdptRequest(preRequest) {
   tPurePath = getPureRelativePath(preRequest.url);
   adptPath = getAdptPath(preRequest.url)
   adptPath += "?ver=" + verdata[tPurePath];
-  adptRequest = new Request(adptPath);
+  adptRequest=preRequest.clone();
+  adptRequest.url=adptPath;
+  //adptRequest = new Request(adptPath);
   return adptRequest;
 }
 
