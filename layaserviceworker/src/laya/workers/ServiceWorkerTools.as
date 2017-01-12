@@ -19,7 +19,7 @@ package laya.workers {
 			if (!isServiceWorkerSupport) return;
 			if (Browser.window.navigator.serviceWorker.controller)
 			{
-				Browser.window.navigator.serviceWorker.controller.postMessage(message, [messageChannel.port2]);
+				Browser.window.navigator.serviceWorker.controller.postMessage(message);
 			}else
 			{
 				trace("service worker not installed");

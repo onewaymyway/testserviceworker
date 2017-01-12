@@ -393,7 +393,7 @@ var Laya=window.Laya=(function(window,document){
 		__proto.sendMessage=function(message){
 			if (!ServiceWorkerTools.isServiceWorkerSupport)return;
 			if (Browser.window.navigator.serviceWorker.controller){
-				Browser.window.navigator.serviceWorker.controller.postMessage(message,[/*no*/this.messageChannel.port2]);
+				Browser.window.navigator.serviceWorker.controller.postMessage(message);
 				}else{
 				console.log("service worker not installed");
 			}
@@ -15639,8 +15639,3 @@ var Laya=window.Laya=(function(window,document){
 	new TestServiceWorker();
 
 })(window,document,Laya);
-
-
-/*
-1 file:///E:/wangwei/serviceworker/testserviceworker/trunk/layaserviceworker/src/laya/workers/ServiceWorkerTools.as (21):warning:messageChannel.port2 This variable is not defined.
-*/
