@@ -29,7 +29,7 @@ var CACHE_VERSION = 1;
 var myPath = "service-worker.js";
 var urlBasePath = location.href.replace(myPath, "");
 var CACHE_SIGN = "layaairtest";
-var fileVerFilePath="fileconfig.json";
+var fileVerFilePath = "fileconfig.json";
 var workerConfig = {};
 function getRelativePath(tPath) {
   return tPath.replace(urlBasePath, "");
@@ -111,8 +111,12 @@ function reloadConfigAndClearPre() {
               tRQ = requestlists[i];
               tRelativePath = getPureRelativePath(tRQ.url)
               if (tRelativePath == fileVerFilePath) {
-                fileVerRQ = tRQ;
-                break;
+                if (getUrlVer(tRQ.url) == self.fileVer) {
+                  fileVerRQ = tRQ;
+                } else {
+                  cache.delete(tRQ);
+                }
+
               }
             }
             var fileVerDataOK = false;
@@ -167,7 +171,7 @@ function reloadConfigAndClearPre() {
                 if (cacheName.indexOf("?") > 0) {
                   tPureName = getPureRelativePath(cacheName);
                   tVer = getUrlVer(cacheName);
-                  if ((tPureName==fileVerFilePath&&tVer==self.fileVer)||(self.verdata[tPureName] && self.verdata[tPureName] == tVer)) {
+                  if ((tPureName == fileVerFilePath && tVer == self.fileVer) || (self.verdata[tPureName] && self.verdata[tPureName] == tVer)) {
                     // console.log('cache is ok:', cacheName);
                   } else {
                     console.log('cache is old:', cacheName);
