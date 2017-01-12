@@ -86,11 +86,12 @@ self.addEventListener('fetch', function (event) {
 
   tPurePath = getPureRelativePath(event.request.url);
   if (self.verdata&&self.verdata[tPurePath]) {
-    adptPath = getAdptPath(event.request.url)
-    adptPath+="?ver="+self.verdata[tPurePath];
-    adptRequest = new Request(adptPath);
-    adptRequest.method = event.request.method;
+    
     tPromise = caches.open(CACHE_SIGN).then(function (cache) {
+      adptPath = getAdptPath(event.request.url)
+      adptPath+="?ver="+self.verdata[tPurePath];
+      adptRequest = new Request(adptPath);
+      adptRequest.method = event.request.method;
 
       return cache.match(adptRequest).then(function (response) {
         if (response ) {
