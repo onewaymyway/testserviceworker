@@ -92,6 +92,7 @@ self.addEventListener('fetch', function (event) {
       adptPath+="?ver="+self.verdata[tPurePath];
       adptRequest = new Request(adptPath);
       adptRequest.method = event.request.method;
+      console.log("cache match:",adptRequest.url);
 
       return cache.match(adptRequest).then(function (response) {
         if (response ) {
@@ -103,7 +104,7 @@ self.addEventListener('fetch', function (event) {
         }
 
         console.log(' No response for %s found in cache. About to fetch ' +
-          'from network...', adptRequest.url);
+          'from network...', adptRequest.url,event.request.url);
 
         return fetch(adptRequest.clone()).then(function (response) {
           console.log('  Response for %s from network is: %O',
