@@ -22,7 +22,7 @@ package laya.workers {
 		}
 		private function _onMessage(event:*):void
 		{
-			trace("onMessage:", event);
+			//trace("onMessage:", event);
 			if (event && event.data)
 			{
 				switch(event.data.msg)

@@ -400,7 +400,6 @@ var Laya=window.Laya=(function(window,document){
 		__class(ServiceWorkerTools,'laya.workers.ServiceWorkerTools');
 		var __proto=ServiceWorkerTools.prototype;
 		__proto._onMessage=function(event){
-			console.log("onMessage:",event);
 			if (event && event.data){
 				switch(event.data.msg){
 					case "reloadSuccess":
