@@ -36,7 +36,7 @@ package laya.workers {
 						break;
 				}
 			}
-			event(ON_MESSAGE, event);
+			this.event(ON_MESSAGE, event);
 			
 		}
 		public function sendMessage(message:*) {

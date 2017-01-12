@@ -7997,7 +7997,7 @@ var Laya=window.Laya=(function(window,document){
 						break ;
 					}
 			}
-			event("onmessage",event);
+			this.event("onmessage",event);
 		}
 
 		__proto.sendMessage=function(message){
