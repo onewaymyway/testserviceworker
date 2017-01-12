@@ -51,17 +51,23 @@ function getAdptPath(tPath) {
   }
   return tPath;
 }
-function getCacheUrl(tPath)
-{
-  
+
+function getAdptRequest(preRequest) {
+  tPurePath = getPureRelativePath(preRequest.url);
+  adptPath = getAdptPath(preRequest.url)
+  adptPath += "?ver=" + self.verdata[tPurePath];
+  adptRequest = new Request(adptPath);
+  return adptRequest;
 }
-function getAdptRequest(preRequest)
+function getUrlVer(tPath)
 {
-   tPurePath = getPureRelativePath(preRequest.url);
-   adptPath = getAdptPath(preRequest.url)
-    adptPath+="?ver="+self.verdata[tPurePath];
-    adptRequest = new Request(adptPath);
-    return adptRequest;
+  if(tPath.indexOf("?ver=")>0)
+  {
+    var tStr=tPath.split("?ver=")[1];
+    return tStr;
+
+  }
+  return "";
 }
 self.addEventListener('install',
   function (event) {
@@ -71,35 +77,61 @@ self.addEventListener('install',
     //);
   });
 
+function reloadConfigAndClearPre() {
+  return fetch("./fileconfig.json").then(
+    function (response) {
+      return response.json();
+    }
+  ).then(
+    function (data) {
+      console.log("load fileConfig success:",data);
+      self.verdata = data;
+      return data;
+    }).then(
+    function () {
+      caches.keys().then(function (cacheNames) {
+        return Promise.all(
+          cacheNames.map(function (cacheName) {
+            if(cacheName.indexOf("?")>0)
+            {
+              tPureName=getPureRelativePath(cacheName);
+              tVer=getUrlVer(cacheName);
+              if(self.verdata[tPureName]&&self.verdata[tPureName]==tVer)
+              {
+                 console.log('cache is ok:', cacheName);
+              }else
+              {
+                 console.log('cache is old:', cacheName);
+                 return caches.delete(cacheName);
+              }
+            }
+          })
+        );
+      })
+    }
+    ).catch(
+    function (e) {
+      console.log("Oops, error");
+    })
+}
 self.addEventListener('activate', function (event) {
   console.log('activate:');
   event.waitUntil(
-    fetch("./fileconfig.json").then(
-      function (response) {
-        return response.json();
-      }
-    ).then(
-      function (data) {
-        console.log(data);
-        self.verdata = data;
-      }).catch(
-      function (e) {
-        console.log("Oops, error");
-      })
+    reloadConfigAndClearPre()
   );
 });
 
 self.addEventListener('fetch', function (event) {
-  console.log('Handling fetch event for', event.request.url);
+  //console.log('Handling fetch event for', event.request.url);
 
   var tPurePath = getPureRelativePath(event.request.url);
-  if (self.verdata&&self.verdata[tPurePath]) {
-    
+  if (self.verdata && self.verdata[tPurePath]) {
+
     tPromise = caches.open(CACHE_SIGN).then(function (cache) {
 
 
       return cache.match(getAdptRequest(event.request)).then(function (response) {
-        if (response ) {
+        if (response) {
           //&& self.verdata[tPurePath] == getPreCacheVer(tPurePath)
 
           console.log(' Found response in cache and ver same:', response.url);
@@ -107,30 +139,25 @@ self.addEventListener('fetch', function (event) {
           return response;
         }
 
-        console.log(' No response for %s found in cache. About to fetch ' +
-          'from network...', event.request.url);
+        // console.log(' No response for %s found in cache. About to fetch from network...', event.request.url);
 
         return fetch(getAdptRequest(event.request)).then(function (response) {
-          console.log('  Response for %s from network is: %O',
-            response,response.url);
-            adptRequest=getAdptRequest(event.request);
+          // console.log('  Response for %s from network is: %O', response,response.url);
+          adptRequest = getAdptRequest(event.request);
 
           if (response.status < 400) {
-            console.log('  Caching the response to', event.request.url,response.url);
-            tPurePath=getPureRelativePath(response.url);
-            console.log("resPath:", tPurePath);
+
+            tPurePath = getPureRelativePath(response.url);
             if (self.verdata && self.verdata[tPurePath]) {
-              console.log("cache resPath:", tPurePath);
-              var cacheResponse= response.clone();
+              console.log('  Caching the response to', event.request.url, response.url);
+              var cacheResponse = response.clone();
               cache.put(adptRequest.clone(), cacheResponse);
-              console.log("cache:",adptRequest.url,cacheResponse.url)
-              //updateCacheVer(tPurePath, self.verdata[tPurePath])
             } else {
-              console.log("not cache for not in verdata resPath:", tResPath,response.url);
+              console.log("not cache for not in verdata resPath:", tResPath, response.url);
             }
 
           } else {
-            console.log('  Not caching the response to', adptRequest.url,response.url);
+            console.log('  Not caching the response to', adptRequest.url, response.url);
           }
           return response;
         });
@@ -144,7 +171,7 @@ self.addEventListener('fetch', function (event) {
 
   } else {
 
-    tPromise = fetch(event.request.clone()).then(function (response) {   
+    tPromise = fetch(event.request.clone()).then(function (response) {
       return response;
     }).catch(function (error) {
       console.error('  Error in fetch handler:', error);
