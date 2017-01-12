@@ -94,6 +94,7 @@ def beginWork(configPath):
     walk(workPath)
     createFileVerFile();
     createConfigFile();
+    copyWorkerJS();
     print(mdData)
 
     
