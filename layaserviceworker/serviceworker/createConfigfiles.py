@@ -7,11 +7,14 @@ gPath=""
 workPath="E:/wangwei/serviceworker/testserviceworker/trunk/layaserviceworker/bin/h5"
 cacheSign="LayaAirGameCache";
 workerPath="service-worker.js";
+excludeFileDic={}
 
 def formatPath(path):
     path=path.replace(gPath,"")
     path=path.replace("\\","/")
     return path;
+def getWorkPath(relativePath):
+    return os.path.join(workPath,relativePath);
 
 def getFileMd5(path):
     fp = open(path,"rb") #open file. There is a big problem here. That is when you get a large file.
@@ -21,13 +24,24 @@ def getFileMd5(path):
     fp.close() #close file
     return str(m.hexdigest())
 
+def isWorkFile(path):
+    path=formatPath(path)
+    if path in excludeFileDic:
+        return False
+    return True
+
 def walk(path):
     fl = os.listdir(path) # get what we have in the dir.
     for f in fl:
-        if os.path.isdir(os.path.join(path,f)): # if is a dir.
+        tFilePath=os.path.join(path,f);
+        if not isWorkFile(tFilePath):
+            continue;
+        if os.path.isdir(os.path.join(path,f)): # if is a dir.      
             walk(os.path.join(path,f))
         else: # if is a file
-            tPath=formatPath(os.path.join(path,f))
+            
+            
+            tPath=formatPath(tFilePath)
             mdData[tPath]=getFileMd5(os.path.join(path,f))
             
 
@@ -43,8 +57,11 @@ def initConfig(filePath):
         cacheSign=jsono["cacheSign"]
     if "workerPath" in jsono:
         workerPath=jsono["workerPath"]
-def getWorkPath(relativePath):
-    return os.path.join(workPath,relativePath);
+    excludeFileDic={};
+    excludeFileDic["workerconfig.json"]=True;
+    excludeFileDic["fileconfig.json"]=True;
+    
+
 
 def createFileVerFile():
     f=open(getWorkPath("fileconfig.json"),"w")
