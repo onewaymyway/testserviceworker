@@ -21,6 +21,15 @@ package {
 			Laya.stage.addChild(msgTxt);
 			showInfo("hello");
 			initServiceWorker();
+
+		}
+		private function initServiceWorker():void {
+			showInfo("try initServiceWorker");
+			ServiceWorkerTools.I.register('./service-worker.js',new Handler(this,serviceWorkerInited));
+		}
+		private function serviceWorkerInited():void
+		{
+			showInfo("serviceWorkerInited from client");
 			test();
 		}
 		private var msgTxt:Text;
@@ -51,14 +60,7 @@ package {
 		
 		}
 		
-		private function initServiceWorker():void {
-			showInfo("try initServiceWorker");
-			ServiceWorkerTools.I.register('./service-worker.js',null,new Handler(this,serviceWorkerInited));
-		}
-		private function serviceWorkerInited():void
-		{
-			showInfo("serviceWorkerInited from client");
-		}
+		
 	
 	}
 

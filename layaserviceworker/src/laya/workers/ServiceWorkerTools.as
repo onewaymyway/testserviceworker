@@ -55,11 +55,11 @@ package laya.workers {
 				var tHandler:Handler;
 				tHandler = _workDoneHandler;
 				_workDoneHandler = null;
-				_workDoneHandler.run();
+				tHandler.run();
 				
 			}
 		}
-		public function register(workerPath:String, option:Object = null,workDoneHandler:Handler=null, forceUpdate:Boolean = true):* {
+		public function register(workerPath:String,workDoneHandler:Handler=null, option:Object = null, forceUpdate:Boolean = true):* {
 			if (!option) {
 				option = {scope: './'};
 			}

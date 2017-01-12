@@ -429,11 +429,11 @@ var Laya=window.Laya=(function(window,document){
 				var tHandler;
 				tHandler=this._workDoneHandler;
 				this._workDoneHandler=null;
-				this._workDoneHandler.run();
+				tHandler.run();
 			}
 		}
 
-		__proto.register=function(workerPath,option,workDoneHandler,forceUpdate){
+		__proto.register=function(workerPath,workDoneHandler,option,forceUpdate){
 			var _$this=this;
 			(forceUpdate===void 0)&& (forceUpdate=true);
 			if (!option){
@@ -490,11 +490,20 @@ var Laya=window.Laya=(function(window,document){
 			Laya.stage.addChild(this.msgTxt);
 			this.showInfo("hello");
 			this.initServiceWorker();
-			this.test();
 		}
 
 		__class(TestServiceWorker,'TestServiceWorker');
 		var __proto=TestServiceWorker.prototype;
+		__proto.initServiceWorker=function(){
+			this.showInfo("try initServiceWorker");
+			ServiceWorkerTools.I.register('./service-worker.js',new Handler(this,this.serviceWorkerInited));
+		}
+
+		__proto.serviceWorkerInited=function(){
+			this.showInfo("serviceWorkerInited from client");
+			this.test();
+		}
+
 		__proto.showInfo=function(info){
 			if (!this.msgTxt)
 				return;
@@ -513,15 +522,6 @@ var Laya=window.Laya=(function(window,document){
 			img.skin="res/btn_close.png";
 			img.pos(500,200);
 			Laya.stage.addChild(img);
-		}
-
-		__proto.initServiceWorker=function(){
-			this.showInfo("try initServiceWorker");
-			ServiceWorkerTools.I.register('./service-worker.js',null,new Handler(this,this.serviceWorkerInited));
-		}
-
-		__proto.serviceWorkerInited=function(){
-			this.showInfo("serviceWorkerInited from client");
 		}
 
 		return TestServiceWorker;
