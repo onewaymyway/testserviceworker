@@ -323,7 +323,7 @@ self.addEventListener('fetch', function (event) {
 });
 
 function goPass(trequest) {
-  return fetch(event.request.clone()).then(function (response) {
+  return fetch(trequest.clone()).then(function (response) {
     return response;
   })
 }
