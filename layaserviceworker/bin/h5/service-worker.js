@@ -265,7 +265,7 @@ self.addEventListener('activate', function (event) {
  * 
  */
 self.addEventListener('fetch', function (event) {
-  debugTrace("fetch:", event.request.url);
+  debugTrace("fetch:"+ event.request.url);
   var tPurePath = getPureRelativePath(event.request.url);
   if (verdata && verdata[tPurePath]) {
     //如果是受版本管理的文件,从缓存中查找
