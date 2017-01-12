@@ -265,7 +265,8 @@ self.addEventListener('activate', function (event) {
  * 
  */
 self.addEventListener('fetch', function (event) {
-  debugTrace("fetch:"+ event.request.url);
+  debugTrace("fetch:" + event.request.url);
+  return goPass(event.request);
   var tPurePath = getPureRelativePath(event.request.url);
   if (verdata && verdata[tPurePath]) {
     //如果是受版本管理的文件,从缓存中查找
@@ -321,7 +322,11 @@ self.addEventListener('fetch', function (event) {
   );
 });
 
-
+function goPass(trequest) {
+  return fetch(event.request.clone()).then(function (response) {
+    return response;
+  })
+}
 /**
  * 处理消息
  * 
