@@ -447,11 +447,11 @@ var Laya=window.Laya=(function(window,document){
 						worker.update();
 					}
 					if (navigator.serviceWorker.controller){
-						console.log('This funky font has been cached by the controlling service worker.');
+						console.log('service worker is working');
 						_$this.sendMessage({"cmd":"reloadConfig"});
 					}
 					else {
-						console.log('Please reload this page to allow the service worker to handle network operations.');
+						console.log('starting service worker');
 						_$this._workDoneCall();
 					}
 					}).catch(function(error){

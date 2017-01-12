@@ -73,11 +73,11 @@ package laya.workers {
 						// Registration was successful. Now, check to see whether the service worker is controlling the page.
 						if (navigator.serviceWorker.controller) {
 							// If .controller is set, then this page is being actively controlled by the service worker.
-							trace('This funky font has been cached by the controlling service worker.');
+							trace('service worker is working');
 							sendMessage({"cmd": "reloadConfig"});
 						}
 						else {
-							trace('Please reload this page to allow the service worker to handle network operations.');
+							trace('starting service worker');
 							_workDoneCall();
 						}
 					}).catch(function(error:*) {
