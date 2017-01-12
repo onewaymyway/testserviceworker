@@ -1,6 +1,8 @@
 package {
 	import laya.display.Sprite;
 	import laya.display.Text;
+	import laya.net.Loader;
+	import laya.net.URL;
 	import laya.ui.Image;
 	import laya.utils.Browser;
 	import laya.utils.Handler;
@@ -23,6 +25,7 @@ package {
 			showInfo("hello");
 			Laya.timer.frameOnce(1, this, initServiceWorker);
 			//initServiceWorker();
+			
 		
 		}
 		
@@ -44,6 +47,12 @@ package {
 		
 		private function serviceWorkerInited():void {
 			showInfo("serviceWorkerInited from client");
+			
+			Laya.loader.load("fileconfig.json",new Handler(this,onFileVerFile),null,Loader.JSON)
+		}
+		private function onFileVerFile():void
+		{
+			URL.version = Loader.getRes("fileconfig.json");
 			test();
 		}
 		private var msgTxt:Text;
