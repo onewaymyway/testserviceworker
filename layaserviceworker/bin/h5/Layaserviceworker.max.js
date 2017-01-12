@@ -8054,7 +8054,7 @@ var Laya=window.Laya=(function(window,document){
 						_$this._workDoneCall();
 					}
 					}).catch(function(error){
-					console.log(error);
+					_$this._traceWorkInfo(error);
 					_$this._workDoneCall();
 				});
 			}

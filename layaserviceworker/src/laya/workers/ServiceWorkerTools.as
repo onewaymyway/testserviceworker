@@ -92,7 +92,7 @@ package laya.workers {
 					}).catch(function(error:*) {
 						// Something went wrong during registration. The service-worker.js file
 						// might be unavailable or contain a syntax error.
-						trace(error);
+						_traceWorkInfo(error);
 						_workDoneCall();
 					});
 			}
