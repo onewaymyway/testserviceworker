@@ -51,6 +51,10 @@ function getAdptPath(tPath) {
   }
   return tPath;
 }
+function getCacheUrl(tPath)
+{
+  
+}
 self.addEventListener('install',
   function (event) {
     console.log("install");
@@ -83,8 +87,8 @@ self.addEventListener('fetch', function (event) {
   tPurePath = getPureRelativePath(event.request.url);
   if (self.verdata&&self.verdata[tPurePath]) {
     adptPath = getAdptPath(event.request.url)
+    adptPath+="?ver="+self.verdata[tPurePath];
     adptRequest = new Request(adptPath);
-    adptRequest.headers.set("fileVer",self.verdata[tPurePath])
     adptRequest.method = event.request.method;
     tPromise = caches.open(CACHE_SIGN).then(function (cache) {
 
@@ -111,7 +115,7 @@ self.addEventListener('fetch', function (event) {
             if (self.verdata && self.verdata[tPurePath]) {
               console.log("cache resPath:", tPurePath);
               var cacheResponse= response.clone();
-              cacheResponse.ver=self.verdata[tPurePath];
+             //cacheResponse.ver=self.verdata[tPurePath];
               //cacheResponse.headers.set("fileVer",self.verdata[tPurePath]);
               cache.put(adptRequest.clone(), cacheResponse);
               console.log("cache:",adptRequest.url,cacheResponse)
