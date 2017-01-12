@@ -29,6 +29,7 @@ var CACHE_VERSION = 1;
 var myPath = "service-worker.js";
 var urlBasePath = location.href.replace(myPath, "");
 var CACHE_SIGN = "layaairtest";
+var fileVerFilePath="fileconfig.json";
 var workerConfig = {};
 function getRelativePath(tPath) {
   return tPath.replace(urlBasePath, "");
@@ -109,7 +110,7 @@ function reloadConfigAndClearPre() {
 
               tRQ = requestlists[i];
               tRelativePath = getPureRelativePath(tRQ.url)
-              if (tRelativePath == "fileconfig.json") {
+              if (tRelativePath == fileVerFilePath) {
                 fileVerRQ = tRQ;
                 break;
               }
@@ -137,7 +138,7 @@ function reloadConfigAndClearPre() {
             }
             //从网络加载最新的文件版本数据
             console.log("get new fileVerData");
-            var fileConfigRq = new Request(getVersionPath("fileconfig.json", self.fileVer));
+            var fileConfigRq = new Request(getVersionPath(fileVerFilePath, self.fileVer));
             return fetch(fileConfigRq.clone()).then(
               function (response) {
                 console.log("get new fileVerData success");
@@ -166,7 +167,7 @@ function reloadConfigAndClearPre() {
                 if (cacheName.indexOf("?") > 0) {
                   tPureName = getPureRelativePath(cacheName);
                   tVer = getUrlVer(cacheName);
-                  if (self.verdata[tPureName] && self.verdata[tPureName] == tVer) {
+                  if ((tPureName==fileVerFilePath&&tVer==self.fileVer)||(self.verdata[tPureName] && self.verdata[tPureName] == tVer)) {
                     // console.log('cache is ok:', cacheName);
                   } else {
                     console.log('cache is old:', cacheName);

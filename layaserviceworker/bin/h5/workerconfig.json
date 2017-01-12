@@ -1,1 +1,1 @@
-{"workerPath": "service-worker.js", "fileVer": "9a3ffd0e2b3d0e80caf50b6d0a6f6660", "cacheSign": "LayaAirGameCache"}
+{"cacheSign": "LayaAirGameCache", "fileVer": "15d8494f2193807bc628eff631817241", "workerPath": "service-worker.js"}
