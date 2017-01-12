@@ -32,15 +32,16 @@ package {
 			ServiceWorkerTools.I.on(ServiceWorkerTools.WORK_INFO, this, onInfo);
 			ServiceWorkerTools.I.register(new Handler(this, serviceWorkerInited));
 		}
-		private function onInfo(info:String):void
-		{
+		
+		private function onInfo(info:String):void {
 			showInfo(info);
 		}
-		private function onMessage(event:*):void
-		{
+		
+		private function onMessage(event:*):void {
 			showInfo("onMessage:");
 			showInfo(JSON.stringify(event.data));
 		}
+		
 		private function serviceWorkerInited():void {
 			showInfo("serviceWorkerInited from client");
 			test();
@@ -57,22 +58,29 @@ package {
 		private function test():void {
 			
 			var imgs:Array = ["res/tt/clip_num.png", "res/pics/g1.png", "res/pics/g2.png", "res/pics/g3.png", "res/pics/g4.png", "res/pics/gg1.png", "res/pics/gg2.png", "res/image.png", "res/image.png", "res/image.png", "res/btn_close.png", "res/clip_num.png"];
-			imgs = ["res/image.png", "res/btn_close.png", "res/pics/g1.png", "res/pics/g2.png"];
+			//imgs = ["res/image.png", "res/btn_close.png", "res/pics/g1.png", "res/pics/g2.png"];
 			var i:int, len:int;
 			len = imgs.length;
 			var xCount:int = 6;
 			var tX:Number;
 			var tY:Number;
 			for (i = 0; i < len; i++) {
-				var img:Image;
-				img = new Image();
-				img.skin = imgs[i];
+				
+				//img.skin = imgs[i];
 				tX = (i % xCount) * 150;
-				tY = Math.floor(i/xCount) * 200;
-				img.pos(tX, tY);
-				Laya.stage.addChild(img);
+				tY = Math.floor(i / xCount) * 200;
+				Laya.timer.once(1000*i, this, createI, [tX,tY,imgs[i]], false);
 			}
+		
+		}
+		
+		private function createI(tX, tY, skin):void {
 			
+			var img:Image;
+			img = new Image();
+			img.pos(tX, tY);
+			img.skin = skin;
+			Laya.stage.addChild(img);
 		}
 	
 	}

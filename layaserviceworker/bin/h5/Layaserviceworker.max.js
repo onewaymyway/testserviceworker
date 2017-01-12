@@ -726,21 +726,24 @@ var Laya=window.Laya=(function(window,document){
 
 		__proto.test=function(){
 			var imgs=["res/tt/clip_num.png","res/pics/g1.png","res/pics/g2.png","res/pics/g3.png","res/pics/g4.png","res/pics/gg1.png","res/pics/gg2.png","res/image.png","res/image.png","res/image.png","res/btn_close.png","res/clip_num.png"];
-			imgs=["res/image.png","res/btn_close.png","res/pics/g1.png","res/pics/g2.png"];
 			var i=0,len=0;
 			len=imgs.length;
 			var xCount=6;
 			var tX=NaN;
 			var tY=NaN;
 			for (i=0;i < len;i++){
-				var img;
-				img=new Image();
-				img.skin=imgs[i];
 				tX=(i % xCount)*150;
-				tY=Math.floor(i/xCount)*200;
-				img.pos(tX,tY);
-				Laya.stage.addChild(img);
+				tY=Math.floor(i / xCount)*200;
+				Laya.timer.once(1000*i,this,this.createI,[tX,tY,imgs[i]],false);
 			}
+		}
+
+		__proto.createI=function(tX,tY,skin){
+			var img;
+			img=new Image();
+			img.pos(tX,tY);
+			img.skin=skin;
+			Laya.stage.addChild(img);
 		}
 
 		return TestServiceWorker;
