@@ -23,8 +23,8 @@ package {
 			msgTxt.zOrder = 100;
 			Laya.stage.addChild(msgTxt);
 			showInfo("hello");
-			Laya.timer.frameOnce(1, this, initServiceWorker);
-			//initServiceWorker();
+			//Laya.timer.frameOnce(1, this, initServiceWorker);
+			initServiceWorker();
 			
 		
 		}
@@ -47,11 +47,12 @@ package {
 		
 		private function serviceWorkerInited():void {
 			showInfo("serviceWorkerInited from client");
-			
+			showInfo("load fileconfig.json");
 			Laya.loader.load("fileconfig.json"+"?v="+Math.random(),new Handler(this,onFileVerFile),null,Loader.JSON)
 		}
 		private function onFileVerFile(data:Object):void
 		{
+			showInfo("fileconfig.json loaded");
 			URL.version = data;
 			test();
 		}

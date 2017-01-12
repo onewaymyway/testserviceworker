@@ -690,12 +690,11 @@ var Laya=window.Laya=(function(window,document){
 			this.msgTxt.zOrder=100;
 			Laya.stage.addChild(this.msgTxt);
 			this.showInfo("hello");
-			Laya.timer.frameOnce(1,this,this.initServiceWorker);
+			this.initServiceWorker();
 		}
 
 		__class(TestServiceWorker,'TestServiceWorker');
 		var __proto=TestServiceWorker.prototype;
-		//initServiceWorker();
 		__proto.initServiceWorker=function(){
 			this.showInfo("try initServiceWorker");
 			ServiceWorkerTools.I.on("onmessage",this,this.onMessage);
@@ -714,10 +713,12 @@ var Laya=window.Laya=(function(window,document){
 
 		__proto.serviceWorkerInited=function(){
 			this.showInfo("serviceWorkerInited from client");
+			this.showInfo("load fileconfig.json");
 			Laya.loader.load("fileconfig.json"+"?v="+Math.random(),new Handler(this,this.onFileVerFile),null,"json")
 		}
 
 		__proto.onFileVerFile=function(data){
+			this.showInfo("fileconfig.json loaded");
 			URL.version=data;
 			this.test();
 		}
