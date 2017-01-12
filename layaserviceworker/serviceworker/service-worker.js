@@ -29,11 +29,9 @@ var CACHE_VERSION = 1;
 var myPath = "service-worker.js";
 var urlBasePath = location.href.replace(myPath, "");
 var CACHE_SIGN = "layaairtest";
-var workerConfig = {};
 function getRelativePath(tPath) {
   return tPath.replace(urlBasePath, "");
 }
-
 function getPreCacheVer(file) {
   return localStorage[file];
 }
@@ -53,9 +51,7 @@ function getAdptPath(tPath) {
   }
   return tPath;
 }
-function getVersionPath(tPath, version) {
-  return tPath + "?ver=" + version;
-}
+
 function getAdptRequest(preRequest) {
   tPurePath = getPureRelativePath(preRequest.url);
   adptPath = getAdptPath(preRequest.url)
@@ -80,76 +76,11 @@ self.addEventListener('install',
   });
 
 function reloadConfigAndClearPre() {
-  //加载worker配置文件
-  return fetch("./workerconfig.json").then(
+  return fetch("./fileconfig.json").then(
     function (response) {
       return response.json();
     }
   ).then(
-    function (data) {
-      //解析worker配置文件
-      console.log("load workerconfig success:", data);
-      self.workerConfig = data;
-      CACHE_SIGN = data["cacheSign"];
-      myPath = data["workerPath"];
-      urlBasePath = location.href.replace(myPath, "");
-      self.fileVer = data["fileVer"]
-      return data;
-    }).then(function () {
-      //获取文件版本信息数据
-
-      //尝试在缓存中查找文件版本信息数据
-      return caches.open(CACHE_SIGN).then(
-        function (cache) {
-          return cache.keys().then(function (requestlists) {
-            var fileVerRQ;
-            var tRQ;
-            var tRelativePath;
-            for (i = 0; i < requestlists.length; i++) {
-
-              tRQ = requestlists[i];
-              tRelativePath = getPureRelativePath(tRQ.url)
-              if (tRelativePath == "fileconfig.json") {
-                fileVerRQ = tRQ;
-                break;
-              }
-            }
-            var fileVerDataOK = false;
-            if (fileVerRQ) {
-              if (getUrlVer(fileVerRQ.url) == self.fileVer) {
-
-                fileVerDataOK = true;
-              }
-            }
-            // return fileVerDataOK;
-             console.log("fileVerDataOK:",fileVerDataOK);
-            if (fileVerDataOK) {
-              //如果缓存中的版本数据是最新的 直接使用缓存数据
-              console.log("use cached fileVerData");
-              return cache.match(fileVerRQ.clone()).then
-                (
-                function (response) {
-                  console.log("get cached fileVerData success");
-                  return response.json();
-
-                }
-                )
-            }
-            //从网络加载最新的文件版本数据
-            console.log("get new fileVerData");
-            var fileConfigRq = new Request(getVersionPath("fileconfig.json", self.fileVer));
-            return fetch(fileConfigRq.clone()).then(
-              function (response) {
-                console.log("get new fileVerData success");
-                cache.put(fileConfigRq.clone(), response.clone())
-                return response.json();
-              }
-            )
-
-          })
-        }
-      )
-    }).then(
     function (data) {
       console.log("load fileConfig success:", data);
       self.verdata = data;
@@ -167,7 +98,7 @@ function reloadConfigAndClearPre() {
                   tPureName = getPureRelativePath(cacheName);
                   tVer = getUrlVer(cacheName);
                   if (self.verdata[tPureName] && self.verdata[tPureName] == tVer) {
-                    // console.log('cache is ok:', cacheName);
+                   // console.log('cache is ok:', cacheName);
                   } else {
                     console.log('cache is old:', cacheName);
                     return cache.delete(tRequest);
@@ -258,15 +189,17 @@ self.addEventListener('message', function (event) {
     switch (event.data.cmd) {
       case "reloadConfig":
         reloadConfigAndClearPre().then(
-          function () {
+          function ()
+          {
             event.ports[0].postMessage({
-              msg: "reloadSuccess"
-            });
+            msg: "reloadSuccess"
+          });
           },
-          function () {
+          function()
+          {
             event.ports[0].postMessage({
-              msg: "reloadFail"
-            });
+            msg: "reloadFail"
+          });
           }
         );
         break;
