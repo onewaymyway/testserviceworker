@@ -131,6 +131,7 @@ function reloadConfigAndClearPre() {
       myPath = data["workerPath"];
       urlBasePath = location.href.replace(myPath, "");
       fileVer = data["fileVer"]
+      console.log("fileVer",fileVer);
       return data;
     }).then(function () {
       //获取文件版本信息数据
