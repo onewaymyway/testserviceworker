@@ -34,7 +34,7 @@ var verdata = {};
 /**
  * 开启调试功能
  */
-var enableDebug = True;
+var enableDebug = true;
 /**
  * 调试信息输出端口
  */
