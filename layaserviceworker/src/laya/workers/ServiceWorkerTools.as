@@ -16,7 +16,7 @@ package laya.workers {
 		
 		public function ServiceWorkerTools() {
 			__JS__("this.messageChannel = new MessageChannel();");
-			messageChannel.port1.onmessage = function(event) {
+			messageChannel.port1.onmessage = function(event:*) {
 				_onMessage(event);
 			};
 		}
@@ -36,7 +36,7 @@ package laya.workers {
 				}
 			}
 		}
-		public function sendMessage(message) {
+		public function sendMessage(message:*) {
 			
 			if (!isServiceWorkerSupport)
 				return;
@@ -66,7 +66,7 @@ package laya.workers {
 			this._workDoneHandler = workDoneHandler;
 			var navigator:* = Browser.window.navigator;
 			if ('serviceWorker' in navigator) {
-				navigator.serviceWorker.register(workerPath, option).then(function(worker) {
+				navigator.serviceWorker.register(workerPath, option).then(function(worker:*) {
 						if (worker && forceUpdate) {
 							worker.update();
 						}
@@ -80,7 +80,7 @@ package laya.workers {
 							trace('Please reload this page to allow the service worker to handle network operations.');
 							_workDoneCall();
 						}
-					}).catch(function(error) {
+					}).catch(function(error:*) {
 						// Something went wrong during registration. The service-worker.js file
 						// might be unavailable or contain a syntax error.
 						trace(error);
