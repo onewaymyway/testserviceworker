@@ -86,7 +86,7 @@ function getAdptPath(tPath) {
  * 
  */
 function getVersionPath(tPath, version) {
-  return tPath + "?ver=" + version;
+  return tPath + "?v=" + version;
 }
 
 /**
@@ -96,7 +96,7 @@ function getVersionPath(tPath, version) {
 function getAdptRequest(preRequest) {
   tPurePath = getPureRelativePath(preRequest.url);
   adptPath = getAdptPath(preRequest.url)
-  adptPath += "?ver=" + verdata[tPurePath];
+  adptPath += "?v=" + verdata[tPurePath];
   //adptRequest=preRequest.clone();
   //adptRequest.url=adptPath;
   adptRequest = new Request(adptPath);
@@ -109,8 +109,8 @@ function getAdptRequest(preRequest) {
  * 
  */
 function getUrlVer(tPath) {
-  if (tPath.indexOf("?ver=") > 0) {
-    var tStr = tPath.split("?ver=")[1];
+  if (tPath.indexOf("?v=") > 0) {
+    var tStr = tPath.split("?v=")[1];
     return tStr;
 
   }
@@ -215,6 +215,7 @@ function reloadConfigAndClearPre() {
     function (data) {
       console.log("load fileConfig success:", data, JSON.stringify(data));
       verdata = data;
+      verdata[fileVerFilePath]=fileVer;
       return data;
     }).then(
     function () {

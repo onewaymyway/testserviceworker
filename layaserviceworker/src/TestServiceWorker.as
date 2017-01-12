@@ -48,7 +48,7 @@ package {
 		private function serviceWorkerInited():void {
 			showInfo("serviceWorkerInited from client");
 			
-			Laya.loader.load("fileconfig.json"+"?ver"+Math.random(),new Handler(this,onFileVerFile),null,Loader.JSON)
+			Laya.loader.load("fileconfig.json"+"?v="+Math.random(),new Handler(this,onFileVerFile),null,Loader.JSON)
 		}
 		private function onFileVerFile(data:Object):void
 		{
