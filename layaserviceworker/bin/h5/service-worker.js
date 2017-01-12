@@ -92,6 +92,7 @@ function reloadConfigAndClearPre() {
       caches.keys().then(function (cacheNames) {
         return Promise.all(
           cacheNames.map(function (cacheName) {
+            console.log("work with:",cacheName);
             if(cacheName.indexOf("?")>0)
             {
               tPureName=getPureRelativePath(cacheName);
