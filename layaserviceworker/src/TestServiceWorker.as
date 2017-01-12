@@ -33,7 +33,7 @@ package {
 		
 		private function onMessage(event:*):void
 		{
-			showInfo(JSON.stringify(event.data));
+			showInfo("onMessage:",JSON.stringify(event.data));
 		}
 		private function serviceWorkerInited():void {
 			showInfo("serviceWorkerInited from client");

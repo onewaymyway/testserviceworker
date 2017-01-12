@@ -702,7 +702,7 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		__proto.onMessage=function(event){
-			this.showInfo(JSON.stringify(event.data));
+			this.showInfo("onMessage:",JSON.stringify(event.data));
 		}
 
 		__proto.serviceWorkerInited=function(){
