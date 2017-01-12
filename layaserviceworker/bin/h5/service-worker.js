@@ -178,8 +178,9 @@ function reloadConfigAndClearPre() {
                 )
             }
             //从网络加载最新的文件版本数据
-            console.log("get new fileVerData");
+            
             var fileConfigRq = new Request(getVersionPath(fileVerFilePath, fileVer));
+            console.log("get new fileVerData",fileConfigRq.url);
             return fetch(fileConfigRq.clone()).then(
               function (response) {
                 console.log("get new fileVerData success");
@@ -193,7 +194,7 @@ function reloadConfigAndClearPre() {
       )
     }).then(
     function (data) {
-      console.log("load fileConfig success:", data);
+      console.log("load fileConfig success:", data,JSON.stringify(data));
       verdata = data;
       return data;
     }).then(
