@@ -385,6 +385,63 @@ var Laya=window.Laya=(function(window,document){
 	*...
 	*@author ww
 	*/
+	//class laya.workers.ServiceWorkerTools
+	var ServiceWorkerTools=(function(){
+		function ServiceWorkerTools(){}
+		__class(ServiceWorkerTools,'laya.workers.ServiceWorkerTools');
+		var __proto=ServiceWorkerTools.prototype;
+		__proto.sendMessage=function(message){
+			if (!ServiceWorkerTools.isServiceWorkerSupport)return;
+			if (Browser.window.navigator.serviceWorker.controller){
+				Browser.window.navigator.serviceWorker.controller.postMessage(message,[/*no*/this.messageChannel.port2]);
+				}else{
+				console.log("service worker not installed");
+			}
+		}
+
+		__proto.register=function(workerPath,option,forceUpdate){
+			var _$this=this;
+			(forceUpdate===void 0)&& (forceUpdate=true);
+			if (!option){
+				option={scope:'./'};
+			};
+			var navigator=Browser.window.navigator;
+			if ('serviceWorker' in navigator){
+				navigator.serviceWorker.register(workerPath,option).then(function(worker){
+					if (worker && forceUpdate){
+						worker.update();
+					}
+					if (navigator.serviceWorker.controller){
+						console.log('This funky font has been cached by the controlling service worker.');
+						_$this.sendMessage({"cmd":"reloadConfig"});
+					}
+					else {
+						console.log('Please reload this page to allow the service worker to handle network operations.');
+					}
+					}).catch(function(error){
+					console.log(error);
+				});
+			}
+			else {
+				console.log('Service workers are not supported in the current browser.');
+			}
+		}
+
+		__getset(1,ServiceWorkerTools,'isServiceWorkerSupport',function(){
+			return 'serviceWorker' in Browser.window.navigator;
+		});
+
+		__static(ServiceWorkerTools,
+		['I',function(){return this.I=new ServiceWorkerTools();}
+		]);
+		return ServiceWorkerTools;
+	})()
+
+
+	/**
+	*...
+	*@author ww
+	*/
 	//class TestServiceWorker
 	var TestServiceWorker=(function(){
 		function TestServiceWorker(){
@@ -422,28 +479,9 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		__proto.initServiceWorker=function(){
-			var _$this=this;
 			this.showInfo("try initServiceWorker");
-			var navigator;
-			navigator=Browser.window.navigator;
-			if ('serviceWorker' in navigator){
-				navigator.serviceWorker.register('./service-worker.js',{scope:'./' }).then(function(worker){
-					if (worker){
-						worker.update();
-					}
-					if (navigator.serviceWorker.controller){
-						_$this.showInfo('This funky font has been cached by the controlling service worker.');
-					}
-					else {
-						_$this.showInfo('Please reload this page to allow the service worker to handle network operations.');
-					}
-					}).catch(function(error){
-					_$this.showInfo(error);
-				});
-			}
-			else {
-				this.showInfo('Service workers are not supported in the current browser.');
-			}
+			ServiceWorkerTools.I.register('./service-worker.js');
+			return;
 		}
 
 		return TestServiceWorker;
@@ -15601,3 +15639,8 @@ var Laya=window.Laya=(function(window,document){
 	new TestServiceWorker();
 
 })(window,document,Laya);
+
+
+/*
+1 file:///E:/wangwei/serviceworker/testserviceworker/trunk/layaserviceworker/src/laya/workers/ServiceWorkerTools.as (21):warning:messageChannel.port2 This variable is not defined.
+*/

@@ -3,6 +3,7 @@ package {
 	import laya.display.Text;
 	import laya.ui.Image;
 	import laya.utils.Browser;
+	import laya.workers.ServiceWorkerTools;
 	
 	/**
 	 * ...
@@ -51,34 +52,36 @@ package {
 		
 		private function initServiceWorker():void {
 			showInfo("try initServiceWorker");
-			var navigator:*;
-			navigator = Browser.window.navigator;
-			if ('serviceWorker' in navigator) {
-				navigator.serviceWorker.register('./service-worker.js', { scope: './' } ).then(function(worker) {
-					if (worker)
-					{
-						worker.update();
-					}
+			ServiceWorkerTools.I.register('./service-worker.js');
+			return;
+			//var navigator:*;
+			//navigator = Browser.window.navigator;
+			//if ('serviceWorker' in navigator) {
+				//navigator.serviceWorker.register('./service-worker.js', { scope: './' } ).then(function(worker) {
+					//if (worker)
+					//{
+						//worker.update();
+					//}
 					// Registration was successful. Now, check to see whether the service worker is controlling the page.
-						if (navigator.serviceWorker.controller) {
+						//if (navigator.serviceWorker.controller) {
 							// If .controller is set, then this page is being actively controlled by the service worker.
-							showInfo('This funky font has been cached by the controlling service worker.');
-						}
-						else {
+							//showInfo('This funky font has been cached by the controlling service worker.');
+						//}
+						//else {
 							// If .controller isn't set, then prompt the user to reload the page so that the service worker can take
 							// control. Until that happens, the service worker's fetch handler won't be used.
-							showInfo('Please reload this page to allow the service worker to handle network operations.');
-						}
-					}).catch(function(error) {
+							//showInfo('Please reload this page to allow the service worker to handle network operations.');
+						//}
+					//}).catch(function(error) {
 						// Something went wrong during registration. The service-worker.js file
 						// might be unavailable or contain a syntax error.
-						showInfo(error);
-					});
-			}
-			else {
+						//showInfo(error);
+					//});
+			//}
+			//else {
 				// The current browser doesn't support service workers.
-				showInfo('Service workers are not supported in the current browser.');
-			}
+				//showInfo('Service workers are not supported in the current browser.');
+			//}
 		}
 	
 	}

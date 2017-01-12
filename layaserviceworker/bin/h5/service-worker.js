@@ -184,3 +184,9 @@ self.addEventListener('fetch', function (event) {
     tPromise
   );
 });
+
+
+self.addEventListener('message', function(event) {
+  console.log('Handling message event:', event);
+  
+});
