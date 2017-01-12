@@ -46,7 +46,7 @@ def walk(path):
             
 
 def initConfig(filePath):
-    global workPath,cacheSign,workerPath
+    global workPath,cacheSign,workerPath,excludeFileDic
     f=open(filePath,"r");
     jsontxt=f.read();
     f.close()
