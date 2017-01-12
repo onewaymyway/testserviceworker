@@ -60,7 +60,11 @@ def initConfig(filePath):
     excludeFileDic={};
     excludeFileDic["workerconfig.json"]=True;
     excludeFileDic["fileconfig.json"]=True;
-    
+    if "exclude" in jsono:
+        excludeList=jsono["exclude"]
+        for exfile in excludeList:
+            excludeFileDic[exfile]=True
+    print(excludeFileDic)
 
 
 def createFileVerFile():

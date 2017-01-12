@@ -2,5 +2,5 @@
 	"workerPath":"service-worker.js",
 	"cacheSign":"LayaAirGameCache",
 	"workDir":"E:/wangwei/serviceworker/testserviceworker/trunk/layaserviceworker/bin/h5",
-	"exclude":[]
+	"exclude":["resizeBy/clip_num.png"]
 }

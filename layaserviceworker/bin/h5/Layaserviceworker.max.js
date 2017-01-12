@@ -518,10 +518,13 @@ var Laya=window.Laya=(function(window,document){
 			img.skin="res/image.png";
 			img.pos(200,200);
 			Laya.stage.addChild(img);
-			var img;
 			img=new Image();
 			img.skin="res/btn_close.png";
 			img.pos(500,200);
+			Laya.stage.addChild(img);
+			img=new Image();
+			img.skin="res/clip_num.png";
+			img.pos(200,500);
 			Laya.stage.addChild(img);
 		}
 

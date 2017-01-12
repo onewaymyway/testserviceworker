@@ -42,20 +42,21 @@ package {
 		}
 		
 		private function test():void {
-			//var sp:Sprite;
-			//sp = new Sprite();
-			//sp.graphics.drawRect(0, 0, 100, 100, "#ff0000");
-			//Laya.stage.addChild(sp);
+
 			var img:Image;
 			img = new Image();
 			img.skin = "res/image.png";
 			img.pos(200, 200);
 			Laya.stage.addChild(img);
 			
-			var img:Image;
 			img = new Image();
 			img.skin = "res/btn_close.png";
 			img.pos(500, 200);
+			Laya.stage.addChild(img);
+			
+			img = new Image();
+			img.skin = "res/clip_num.png";
+			img.pos(200, 500);
 			Laya.stage.addChild(img);
 		
 		}
