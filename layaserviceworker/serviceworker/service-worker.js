@@ -266,7 +266,11 @@ self.addEventListener('activate', function (event) {
  */
 self.addEventListener('fetch', function (event) {
   debugTrace("fetch:" + event.request.url);
-  return goPass(event.request);
+   //返回结果
+  event.respondWith(
+    goPass(event.request)
+  );
+  //return goPass(event.request);
   var tPurePath = getPureRelativePath(event.request.url);
   if (verdata && verdata[tPurePath]) {
     //如果是受版本管理的文件,从缓存中查找
