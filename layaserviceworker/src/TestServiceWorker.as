@@ -28,7 +28,14 @@ package {
 			
 		
 		}
+		private var msgTxt:Text;
 		
+		private function showInfo(info:String):void {
+			if (!msgTxt)
+				return;
+			msgTxt.text += "\n" + info;
+			trace(info);
+		}
 		private function initServiceWorker():void {
 			showInfo("try initServiceWorker");
 			ServiceWorkerTools.I.on(ServiceWorkerTools.ON_MESSAGE, this, onMessage);
@@ -56,14 +63,7 @@ package {
 			URL.version = data;
 			test();
 		}
-		private var msgTxt:Text;
 		
-		private function showInfo(info:String):void {
-			if (!msgTxt)
-				return;
-			msgTxt.text += "\n" + info;
-			trace(info);
-		}
 		
 		private function test():void {
 			
