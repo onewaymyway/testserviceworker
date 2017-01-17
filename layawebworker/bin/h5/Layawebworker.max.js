@@ -364,6 +364,7 @@ var Laya=window.Laya=(function(window,document){
 			URL.rootPath=URL.basePath=URL.getPath(location.protocol=="file:" ? pathName :location.protocol+"//"+location.host+location.pathname);
 			Laya.render=new Render(0,0);
 			Laya.stage.size(width,height);
+			if (Config.workerLoader)WorkerLoader.__init__();
 			RenderSprite.__init__();
 			KeyBoardManager.__init__();
 			MouseManager.instance.__init__(Laya.stage,Render.canvas);
@@ -377,13 +378,333 @@ var Laya=window.Laya=(function(window,document){
 		Laya.timer=null;
 		Laya.loader=null;
 		Laya.render=null
-		Laya.version="1.6.1Beta";
+		Laya.version="1.6.1Beta2";
 		Laya.stageBox=null
 		Laya._isinit=false;
 		__static(Laya,
 		['conchMarket',function(){return this.conchMarket=window.conch?conchMarket:null;},'PlatformClass',function(){return this.PlatformClass=window.PlatformClass;}
 		]);
 		return Laya;
+	})()
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class laya.workers.CommonWorker
+	var CommonWorker=(function(){
+		function CommonWorker(){
+			this._fun=null;
+			this.work=null;
+		}
+
+		__class(CommonWorker,'laya.workers.CommonWorker');
+		var __proto=CommonWorker.prototype;
+		__proto.doWork=function(params,callBack){
+			if (!WorkerUtils.StrWorkerEnable){
+				callBack(this.work.apply(this,params));
+				}else{
+				if (!this._fun){
+					this._fun=WorkerUtils.buildWorker(this.work);
+				}
+				this._fun.apply(this,params).done=callBack;
+			}
+		}
+
+		CommonWorker.createByFun=function(fun){
+			var cmWorker;
+			cmWorker=new CommonWorker();
+			cmWorker.work=fun;
+			return cmWorker;
+		}
+
+		return CommonWorker;
+	})()
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class laya.workers.WorkerJob
+	var WorkerJob=(function(){
+		function WorkerJob(workerUrl,args){
+			this._worker=null;
+			this.callbacks={
+				done:null,
+				failed:null,
+				terminated:null
+			};
+			this.results={
+				done:null,
+				failed:null,
+				terminated:null
+			};
+			this._worker=WorkerUtils.createWorkerByUrl(workerUrl);
+			this.work(args);
+		}
+
+		__class(WorkerJob,'laya.workers.WorkerJob');
+		var __proto=WorkerJob.prototype;
+		__proto.work=function(args){
+			var _this=this;
+			this.terminate=this.terminate;
+			this._worker.addEventListener("message",Utils.bind(this._onMessage,this),false);
+			this._worker.addEventListener("error",Utils.bind(this._onError,this),false);
+			this._postMessage("threadify-start",args);
+		}
+
+		__proto._onError=function(error){
+			this.results.failed=[error];
+			this._callCallbacks();
+			this.terminate();
+		}
+
+		__proto._callCallbacks=function(){
+			for (var cb in this.callbacks){
+				if (this.callbacks[cb] && this.results[cb]){
+					this.callbacks[cb].apply(this,this.results[cb]);
+					this.results[cb]=null;
+				}
+			}
+		}
+
+		__proto.terminate=function(){
+			this._worker.terminate();
+			this.results.terminated=[];
+			this._callCallbacks();
+		}
+
+		__proto._postMessage=function(name,args){
+			var serialized=WorkerUtils.serializeArgs(args || []);
+			var data={
+				name:name,
+				args:serialized.args
+			};
+			this._worker.postMessage(data,serialized.transferable);
+		}
+
+		__proto._onMessage=function(event){
+			var data=event.data || {};
+			var args=WorkerUtils.unserializeArgs(data.args || []);
+			switch (data.name){
+				case "threadify-return":
+					this.results.done=args;
+					break ;
+				case "threadify-error":
+					this.results.failed=args;
+					break ;
+				case "threadify-terminated":
+					this.results.terminated=[];
+				}
+			this._callCallbacks();
+		}
+
+		__getset(0,__proto,'done',function(){
+			return this.callbacks.done;
+			},function(fn){
+			this.callbacks.done=fn;
+			this._callCallbacks();
+		});
+
+		__getset(0,__proto,'failed',function(){
+			return this.callbacks.failed;
+			},function(fn){
+			this.callbacks.failed=fn;
+			this._callCallbacks();
+		});
+
+		__getset(0,__proto,'terminated',function(){
+			return this.callbacks.terminated;
+			},function(fn){
+			this.callbacks.terminated=fn;
+			this._callCallbacks();
+		});
+
+		return WorkerJob;
+	})()
+
+
+	/**
+	*...
+	*@author ww
+	*/
+	//class laya.workers.WorkerUtils
+	var WorkerUtils=(function(){
+		function WorkerUtils(){}
+		__class(WorkerUtils,'laya.workers.WorkerUtils');
+		__getset(1,WorkerUtils,'StrWorkerEnable',function(){
+			if (WorkerUtils._strWorkerEnabeStatu==-1){
+				try{
+					WorkerUtils.createWorkerByStr('console.log("strWorkerEnable")');
+					WorkerUtils._strWorkerEnabeStatu=1;
+				}
+				catch (e){
+					WorkerUtils._strWorkerEnabeStatu=0;
+				}
+			}
+			return WorkerUtils._strWorkerEnabeStatu==1;
+		});
+
+		WorkerUtils.createWorkerByStr=function(codes){
+			var worker_blob=new Browser.window.Blob([codes]);
+			var worker=new Browser.window.Worker(Browser.window.URL.createObjectURL(worker_blob));
+			return worker;
+		}
+
+		WorkerUtils.createWorkerByUrl=function(url){
+			var worker=new Browser.window.Worker(url);
+			return worker;
+		}
+
+		WorkerUtils.serializeArgs=function(args){
+			"use strict";
+			var typedArray=["Int8Array","Uint8Array","Uint8ClampedArray","Int16Array","Uint16Array","Int32Array","Uint32Array","Float32Array","Float64Array"];
+			var serializedArgs=[];
+			var transferable=[];
+			for (var i=0;i < args.length;i++){
+				if (args[i] instanceof Error){
+					var obj={type:"Error",value:{name:args[i].name}};
+					var keys=Object.getOwnPropertyNames(args[i]);
+					for (var k=0;k < keys.length;k++){
+						obj.value[keys[k]]=args[i][keys[k]];
+					}
+					serializedArgs.push(obj);
+				}
+				else if (args[i] instanceof DataView){
+					transferable.push(args[i].buffer);
+					serializedArgs.push({type:"DataView",value:args[i].buffer});
+				}
+				else {
+					if (args[i] instanceof ArrayBuffer){
+						transferable.push(args[i]);
+					}
+					else if ("ImageData" in WorkerUtils.global && args[i] instanceof WorkerUtils.ImageData){
+						transferable.push(args[i].data.buffer);
+					}
+					else {
+						for (var t=0;t < typedArray.length;t++){
+							if (args[i] instanceof WorkerUtils.global[typedArray[t]]){
+								transferable.push(args[i].buffer);
+								break ;
+							}
+						}
+					}
+					serializedArgs.push({type:"arg",value:args[i]});
+				}
+			}
+			return {args:serializedArgs,transferable:transferable};
+		}
+
+		WorkerUtils.unserializeArgs=function(serializedArgs){
+			"use strict";
+			var args=[];
+			for (var i=0;i < serializedArgs.length;i++){
+				switch (serializedArgs[i].type){
+					case "arg":
+						args.push(serializedArgs[i].value);
+						break ;
+					case "Error":;
+						var obj=new Error();
+						for (var key in serializedArgs[i].value){
+							obj[key]=serializedArgs[i].value[key];
+						}
+						args.push(obj);
+						break ;
+					case "DataView":
+						args.push(new DataView(serializedArgs[i].value));
+					}
+			}
+			return args;
+		}
+
+		WorkerUtils.workerMainFunction=function(workerFunction,serializeArgs,unserializeArgs){
+			"use strict";
+			var thread={
+				terminate:function (){
+					_postMessage("threadify-terminated",[]);
+					WorkerUtils.global.close();
+				},
+				error:function (){
+					_postMessage("threadify-error",arguments);
+				},
+				"return":function (){
+					_postMessage("threadify-return",arguments);
+					thread.terminate();
+				}
+			};
+			function _postMessage (name,args){
+				var serialized=serializeArgs(args || []);
+				var data={
+					name:name,
+					args:serialized.args
+				};
+				WorkerUtils.global.postMessage(data,serialized.transferable);
+			}
+			function _onMessage (event){
+				var data=event.data || {};
+				var args=unserializeArgs(data.args || []);
+				switch (data.name){
+					case "threadify-start":;
+						var result;
+						try {
+							result=workerFunction.apply(thread,args);
+							}catch (error){
+							thread.error(error);
+							thread.terminate();
+						}
+						if (result!==undefined){
+							_postMessage("threadify-return",[result]);
+							thread.terminate();
+							}else{
+							_postMessage("threadify-return",[]);
+						}
+					}
+			}
+			WorkerUtils.global.addEventListener("message",_onMessage,false);
+		}
+
+		WorkerUtils.getWorkTemplete=function(){
+			var reg=new RegExp("WorkerUtils.","g");
+			if(!WorkerUtils._workerMainStr)
+				WorkerUtils._workerMainStr=[
+			"var global=this;(",
+			WorkerUtils.workerMainFunction.toString().replace(reg,""),
+			")(",
+			"#{##}#",
+			",",
+			WorkerUtils.serializeArgs.toString().replace(reg,""),
+			",",
+			WorkerUtils.unserializeArgs.toString().replace(reg,""),
+			");"].join("\n");
+			return WorkerUtils._workerMainStr;
+		}
+
+		WorkerUtils.buildWorker=function(workerFunction){
+			var workerStr;
+			workerStr=WorkerUtils.getWorkTemplete().replace("#{##}#",workerFunction.toString());
+			var workerBlob=new Browser.window.Blob(
+			[
+			workerStr],{
+				type:"application/javascript"
+			});
+			var workerUrl=Browser.window.URL.createObjectURL(workerBlob);
+			return function (){
+				var args=[];
+				for (var i=0;i < arguments.length;i++){
+					args.push(arguments[i]);
+				}
+				return new WorkerJob(workerUrl,args);
+			};
+		}
+
+		WorkerUtils._strWorkerEnabeStatu=-1;
+		WorkerUtils._workerMainStr=null
+		__static(WorkerUtils,
+		['WorkerEnable',function(){return this.WorkerEnable=Browser.window.Worker;},'ImageData',function(){return this.ImageData=Browser.window.ImageData;},'global',function(){return this.global=Browser.window;}
+		]);
+		return WorkerUtils;
 	})()
 
 
@@ -398,6 +719,7 @@ var Laya=window.Laya=(function(window,document){
 			this.cmWorker=null;
 			this.testLen=999999999;
 			this.msgTxt=null;
+			this.strPng="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGIAAABRCAYAAAApS3MNAAABSUlEQVR4Xu3a0QmFMADFUJ1JXM0h3moPZ6qg4AoNeLqAIenFn65jjLE40w2sQkxvcAMI0eggRKSDEEJUDEQ4/COEiBiIYFiEEBEDEQyLECJiIIJhEUJEDEQwLEKIiIEIhkUIETEQwbAIISIGIhgWIUTEQATDIoSIGIhgWIQQEQMRDIsQImIggnEvYvv9IzjfxDiP/XlgJsTcCyDEXP/v14UQImIggmERQkQMRDAsQoiIgQiGRQgRMRDBsAghIgYiGBYhRMRABMMihIgYiGBYhBARAxEMixAiYiCCYRFCRAxEMCxCiIiBCMa7iAjPpzG8fY3kF0KIiIEIhkUIETEQwbAIISIGIhgWIUTEQATDIoSIGIhgWIQQEQMRDIsQImIggmERQkQMRDAsQoiIgQiGRQgRMRDBsAghIgYiGBYhRMRABMMihIgYiGBcGJiOHTRZjZAAAAAASUVORK5CYII=";
 			Laya.init(1000,900);
 			Stat.show();
 			this.msgTxt=new Text();
@@ -407,31 +729,34 @@ var Laya=window.Laya=(function(window,document){
 			this.msgTxt.fontSize=30;
 			this.msgTxt.mouseEnabled=false;
 			Laya.stage.addChild(this.msgTxt);
-			this.showInfo("hello");
+			this.showInfo("hello33");
 			this.showInfo("Webgl:"+Render.isWebGL);
 			this.showInfo("workerEnable:"+WorkerUtils.WorkerEnable);
 			this.showInfo("StrWorkerEnable:"+WorkerUtils.StrWorkerEnable);
-			try{
+			try {
 				new Browser.window.ImageData(22,22);
 				this.showInfo("create ImageData success");
-				}catch (e){
+			}
+			catch (e){
 				this.showInfo("create ImageData fail:"+e.toString());
 				this.showInfo("create ImageData fail:"+Browser.window.ImageData.length);
 			}
-			try{
+			try {
 				new Browser.window.Blob(["hahahah"]);
 				this.showInfo("create Blob success");
-				}catch (e){
+			}
+			catch (e){
 				this.showInfo("create Blob fail:"+e.toString());
 				this.showInfo("create Blob fail:"+Browser.window.Blob);
 			}
-			ImageLoaderWorker.init();
-			ImageLoaderWorker.I.on("image_err",this,this.showInfo);
+			WorkerLoader.I=new WorkerLoader();
 			Laya.stage.bgColor="#ffffff";
 			this.test();
 			this.testCommonWorker();
 			this.testAni();
 			this.testImageDecode();
+			if (WorkerLoader.I)
+				WorkerLoader.I.on("image_err",this,this.showInfo);
 		}
 
 		__class(TestWorker,'TestWorker');
@@ -471,7 +796,7 @@ var Laya=window.Laya=(function(window,document){
 		}
 
 		__proto.onBtnClick=function(btn){
-			switch(btn.name){
+			switch (btn.name){
 				case "CalMainThread":
 					this.showInfo("CalMainThread");
 					TimeTool.getTime("test");
@@ -538,7 +863,6 @@ var Laya=window.Laya=(function(window,document){
 		__proto.test=function(){}
 		//testHookedLoader();
 		__proto.testHookedLoader=function(){
-			ImageLoader.hookImageLoader();
 			this.addAImage("res/monster_tongbilinghou.png");
 		}
 
@@ -547,14 +871,14 @@ var Laya=window.Laya=(function(window,document){
 			var image;
 			image=new Image();
 			image.skin=path;
-			image.pos(800*Math.random(),800*Math.random());
+			image.pos(800 *Math.random(),800 *Math.random());
 			Laya.stage.addChild(image);
 		}
 
 		__proto.testImageWorker=function(){
 			var tUrl;
 			tUrl=URL.formatURL("res/image.png");
-			ImageLoaderWorker.I.loadImage(tUrl);
+			WorkerLoader.I.loadImage(tUrl);
 		}
 
 		__proto.testWorker=function(){
@@ -573,11 +897,15 @@ var Laya=window.Laya=(function(window,document){
 			tUrl=URL.formatURL(path);
 			this.showInfo("ImageLoaderBeginLoad");
 			TimeTool.getTime("ImageLoader");
-			ImageLoaderWorker.I.on(tUrl,this,this.imageLoaded);
-			ImageLoaderWorker.I.loadImage(tUrl);
+			WorkerLoader.I.on(tUrl,this,this.imageLoaded);
+			WorkerLoader.I.loadImage(tUrl);
 		}
 
 		__proto.imageLoaded=function(canvas){
+			if (!canvas){
+				this.showInfo("ImageLoader Fail");
+				return;
+			};
 			var tex;
 			tex=new Texture(canvas);
 			Laya.stage.graphics.drawTexture(tex,100,100);
@@ -600,6 +928,108 @@ var Laya=window.Laya=(function(window,document){
 			this.showInfo("complete:"+TimeTool.getTime("MainLoader"));
 		}
 
+		__proto.testCreateImageBitmap=function(url){
+			var _$this=this;
+			var xhr=new Browser.window.XMLHttpRequest;
+			xhr.open("GET",url,true);
+			xhr.responseType="arraybuffer";
+			xhr.onload=function (){
+				var response=xhr.response || xhr.mozResponseArrayBuffer;
+				response=new Browser.window.Blob([new Uint8Array(response)],{type:"image/png"});
+				try {
+					Browser.window.createImageBitmap(response).then(function(imageBitmap){
+						_$this.showInfo("imageBitmapCreated:",imageBitmap);
+						_$this.showImageBitmap(imageBitmap);
+						},function(e){
+						_$this.showInfo("createImageBitmap failed11");
+						}).catch(function(e){
+						_$this.showInfo("createImageBitmap failed");
+					})
+				}
+				catch (e){
+					_$this.showInfo("createImageBitmap failed");
+				}
+			}
+			xhr.send(null);
+		}
+
+		__proto.testCreateImageBitmap2=function(url){
+			var _$this=this;
+			var image=new Browser.window.Image();
+			image.onload=function (){
+				try {
+					Browser.window.createImageBitmap(image).then(function(imageBitmap){
+						_$this.showInfo("imageBitmapCreated:",imageBitmap);
+						},function(e){
+						_$this.showInfo("failed11");
+						}).catch(function(e){
+						_$this.showInfo("failed");
+					})
+				}
+				catch (e){
+					_$this.showInfo("failed");
+				}
+			}
+			image.src=url;
+		}
+
+		__proto.testFetch=function(url){
+			var _$this=this;
+			url=URL.formatURL(url);
+			Browser.window.fetch(url).then(function(response){
+				return response.blob()
+			})
+			.then(function(blobData){
+				return Browser.window.createImageBitmap(blobData);
+				}).then(function(imageBitmap){
+				_$this.showInfo("imageBitmapCreated:"+imageBitmap);
+				_$this.showImageBitmap(imageBitmap);
+				}).catch(function(e){
+				debugger;
+			})
+		}
+
+		__proto.showImageBitmap=function(imageBitmap){
+			var canvas=new Laya.HTMLCanvas("2D");
+			canvas.size(imageBitmap.width,imageBitmap.height);
+			var ctx;
+			ctx=canvas.source.getContext("2d");
+			ctx.drawImage(imageBitmap,0,0);
+			var tex;
+			tex=new Texture(canvas);
+			Laya.stage.graphics.drawTexture(tex,0,0);
+		}
+
+		__proto.testBase64=function(){
+			var _$this=this;
+			var blobData;
+			blobData=this.dataURLtoBlob(this.strPng);
+			console.log(blobData);
+			Browser.window.createImageBitmap(blobData).then(function(imageBitmap){
+				_$this.showInfo("imageBitmapCreated:",imageBitmap);
+				_$this.showImageBitmap(imageBitmap);
+				},function(e){
+				_$this.showInfo("createImageBitmap failed11");
+				}).catch(function(e){
+				_$this.showInfo("createImageBitmap failed");
+			})
+		}
+
+		__proto.atob=function(p){
+			return Browser.window.atob(p);
+		}
+
+		__proto.dataURLtoBlob=function(dataurl){
+			var arr=dataurl.split(','),mime=arr[0].match(/:(.*?);/)[1],bstr=this.atob(arr[1]),n=bstr.length,u8arr=new Uint8Array(n);
+			while (n--){
+				u8arr[n]=bstr.charCodeAt(n);
+			}
+			return new TestWorker.Blob([u8arr],{type:mime});
+		}
+
+		__static(TestWorker,
+		['Blob',function(){return this.Blob=Browser.window.Blob;}
+		]);
 		return TestWorker;
 	})()
 
@@ -620,6 +1050,7 @@ var Laya=window.Laya=(function(window,document){
 		Config.isAntialias=false;
 		Config.isAlpha=false;
 		Config.premultipliedAlpha=false;
+		Config.workerLoader=false;
 		return Config;
 	})()
 
@@ -4480,6 +4911,11 @@ var Laya=window.Laya=(function(window,document){
 			}
 			Render._context=new RenderContext(width,height,isWebGl ? null :Render._mainCanvas);
 			Render._context.ctx.setIsMainContext();
+			var arr=/\bChrome\/(\d+)/.exec(Browser.userAgent);
+			if (arr && arr.length>1 && arr[1] < 38){
+				Browser.window.setInterval(function(){Laya.stage._loop();},1000/60);
+				return;
+			}
 			Browser.window.requestAnimationFrame(loop);
 			function loop (){
 				Laya.stage._loop();
@@ -6048,7 +6484,7 @@ var Laya=window.Laya=(function(window,document){
 				laya.utils.Browser._onMessage(e);
 			},false);
 			Browser.document.__createElement=Browser.document.createElement;
-			window.requestAnimationFrame=(function(){return window.requestAnimationFrame || window.webkitRequestAnimationFrame ||window.mozRequestAnimationFrame || window.oRequestAnimationFrame ||function (c){return window.setTimeout(c,1000 / 60);};})();
+			window.requestAnimationFrame=window.requestAnimationFrame || window.webkitRequestAnimationFrame || window.mozRequestAnimationFrame || window.oRequestAnimationFrame || window.msRequestAnimationFrame || function (c){return window.setTimeout(c,1000 / 60);};;
 			var $BS=window.document.body.style;$BS.margin=0;$BS.overflow='hidden';;
 			var metas=window.document.getElementsByTagName('meta');;
 			var i=0,flag=false,content='width=device-width,initial-scale=1.0,minimum-scale=1.0,maximum-scale=1.0,user-scalable=no';;
@@ -8123,374 +8559,6 @@ var Laya=window.Laya=(function(window,document){
 		});
 
 		return WordText;
-	})()
-
-
-	/**
-	*...
-	*@author ww
-	*/
-	//class laya.workers.CommonWorker
-	var CommonWorker=(function(){
-		function CommonWorker(){
-			this._fun=null;
-			this.work=null;
-		}
-
-		__class(CommonWorker,'laya.workers.CommonWorker');
-		var __proto=CommonWorker.prototype;
-		__proto.doWork=function(params,callBack){
-			if (!WorkerUtils.StrWorkerEnable){
-				callBack(this.work.apply(this,params));
-				}else{
-				if (!this._fun){
-					this._fun=WorkerUtils.buildWorker(this.work);
-				}
-				this._fun.apply(this,params).done=callBack;
-			}
-		}
-
-		CommonWorker.createByFun=function(fun){
-			var cmWorker;
-			cmWorker=new CommonWorker();
-			cmWorker.work=fun;
-			return cmWorker;
-		}
-
-		return CommonWorker;
-	})()
-
-
-	/**
-	*使用Work加载Image的工具类
-	*@author ww
-	*/
-	//class laya.workers.ImageLoader
-	var ImageLoader=(function(){
-		function ImageLoader(){}
-		__class(ImageLoader,'laya.workers.ImageLoader');
-		var __proto=ImageLoader.prototype;
-		/**
-		*@private
-		*加载图片资源。
-		*@param url 资源地址。
-		*/
-		__proto._loadImage=function(url){
-			var _this=this;
-			if (url.toLowerCase().indexOf(".png")< 0){
-				ImageLoader._preLoadFun.call(_this,url);
-				return;
-			}
-			function clear (){
-				ImageLoaderWorker.I.off(url,_this,onload);
-			};
-			var onload=function (image){
-				clear();
-				if (image){
-					_this.onLoaded(image);
-					}else{
-					ImageLoader._preLoadFun.call(_this,url);
-				}
-			};
-			ImageLoaderWorker.I.on(url,_this,onload);
-			ImageLoaderWorker.I.loadImage(url);
-		}
-
-		ImageLoader.hookImageLoader=function(){
-			if (!Browser.window.Worker)return;
-			ImageLoader._preLoadFun=Loader["prototype"]["_loadImage"];
-			Loader["prototype"]["_loadImage"]=ImageLoader["prototype"]["_loadImage"];
-			if (!ImageLoaderWorker.I)ImageLoaderWorker.I=new ImageLoaderWorker();
-			return true;
-		}
-
-		ImageLoader._preLoadFun=null
-		return ImageLoader;
-	})()
-
-
-	/**
-	*...
-	*@author ww
-	*/
-	//class laya.workers.WorkerJob
-	var WorkerJob=(function(){
-		function WorkerJob(workerUrl,args){
-			this._worker=null;
-			this.callbacks={
-				done:null,
-				failed:null,
-				terminated:null
-			};
-			this.results={
-				done:null,
-				failed:null,
-				terminated:null
-			};
-			this._worker=WorkerUtils.createWorkerByUrl(workerUrl);
-			this.work(args);
-		}
-
-		__class(WorkerJob,'laya.workers.WorkerJob');
-		var __proto=WorkerJob.prototype;
-		__proto.work=function(args){
-			var _this=this;
-			this.terminate=this.terminate;
-			this._worker.addEventListener("message",Utils.bind(this._onMessage,this),false);
-			this._worker.addEventListener("error",Utils.bind(this._onError,this),false);
-			this._postMessage("threadify-start",args);
-		}
-
-		__proto._onError=function(error){
-			this.results.failed=[error];
-			this._callCallbacks();
-			this.terminate();
-		}
-
-		__proto._callCallbacks=function(){
-			for (var cb in this.callbacks){
-				if (this.callbacks[cb] && this.results[cb]){
-					this.callbacks[cb].apply(this,this.results[cb]);
-					this.results[cb]=null;
-				}
-			}
-		}
-
-		__proto.terminate=function(){
-			this._worker.terminate();
-			this.results.terminated=[];
-			this._callCallbacks();
-		}
-
-		__proto._postMessage=function(name,args){
-			var serialized=WorkerUtils.serializeArgs(args || []);
-			var data={
-				name:name,
-				args:serialized.args
-			};
-			this._worker.postMessage(data,serialized.transferable);
-		}
-
-		__proto._onMessage=function(event){
-			var data=event.data || {};
-			var args=WorkerUtils.unserializeArgs(data.args || []);
-			switch (data.name){
-				case "threadify-return":
-					this.results.done=args;
-					break ;
-				case "threadify-error":
-					this.results.failed=args;
-					break ;
-				case "threadify-terminated":
-					this.results.terminated=[];
-				}
-			this._callCallbacks();
-		}
-
-		__getset(0,__proto,'done',function(){
-			return this.callbacks.done;
-			},function(fn){
-			this.callbacks.done=fn;
-			this._callCallbacks();
-		});
-
-		__getset(0,__proto,'failed',function(){
-			return this.callbacks.failed;
-			},function(fn){
-			this.callbacks.failed=fn;
-			this._callCallbacks();
-		});
-
-		__getset(0,__proto,'terminated',function(){
-			return this.callbacks.terminated;
-			},function(fn){
-			this.callbacks.terminated=fn;
-			this._callCallbacks();
-		});
-
-		return WorkerJob;
-	})()
-
-
-	/**
-	*...
-	*@author ww
-	*/
-	//class laya.workers.WorkerUtils
-	var WorkerUtils=(function(){
-		function WorkerUtils(){}
-		__class(WorkerUtils,'laya.workers.WorkerUtils');
-		__getset(1,WorkerUtils,'StrWorkerEnable',function(){
-			if (WorkerUtils._strWorkerEnabeStatu==-1){
-				try{
-					WorkerUtils.createWorkerByStr('console.log("strWorkerEnable")');
-					WorkerUtils._strWorkerEnabeStatu=1;
-				}
-				catch (e){
-					WorkerUtils._strWorkerEnabeStatu=0;
-				}
-			}
-			return WorkerUtils._strWorkerEnabeStatu==1;
-		});
-
-		WorkerUtils.createWorkerByStr=function(codes){
-			var worker_blob=new Browser.window.Blob([codes]);
-			var worker=new Browser.window.Worker(Browser.window.URL.createObjectURL(worker_blob));
-			return worker;
-		}
-
-		WorkerUtils.createWorkerByUrl=function(url){
-			var worker=new Browser.window.Worker(url);
-			return worker;
-		}
-
-		WorkerUtils.serializeArgs=function(args){
-			"use strict";
-			var typedArray=["Int8Array","Uint8Array","Uint8ClampedArray","Int16Array","Uint16Array","Int32Array","Uint32Array","Float32Array","Float64Array"];
-			var serializedArgs=[];
-			var transferable=[];
-			for (var i=0;i < args.length;i++){
-				if (args[i] instanceof Error){
-					var obj={type:"Error",value:{name:args[i].name}};
-					var keys=Object.getOwnPropertyNames(args[i]);
-					for (var k=0;k < keys.length;k++){
-						obj.value[keys[k]]=args[i][keys[k]];
-					}
-					serializedArgs.push(obj);
-				}
-				else if (args[i] instanceof DataView){
-					transferable.push(args[i].buffer);
-					serializedArgs.push({type:"DataView",value:args[i].buffer});
-				}
-				else {
-					if (args[i] instanceof ArrayBuffer){
-						transferable.push(args[i]);
-					}
-					else if ("ImageData" in WorkerUtils.global && args[i] instanceof WorkerUtils.ImageData){
-						transferable.push(args[i].data.buffer);
-					}
-					else {
-						for (var t=0;t < typedArray.length;t++){
-							if (args[i] instanceof WorkerUtils.global[typedArray[t]]){
-								transferable.push(args[i].buffer);
-								break ;
-							}
-						}
-					}
-					serializedArgs.push({type:"arg",value:args[i]});
-				}
-			}
-			return {args:serializedArgs,transferable:transferable};
-		}
-
-		WorkerUtils.unserializeArgs=function(serializedArgs){
-			"use strict";
-			var args=[];
-			for (var i=0;i < serializedArgs.length;i++){
-				switch (serializedArgs[i].type){
-					case "arg":
-						args.push(serializedArgs[i].value);
-						break ;
-					case "Error":;
-						var obj=new Error();
-						for (var key in serializedArgs[i].value){
-							obj[key]=serializedArgs[i].value[key];
-						}
-						args.push(obj);
-						break ;
-					case "DataView":
-						args.push(new DataView(serializedArgs[i].value));
-					}
-			}
-			return args;
-		}
-
-		WorkerUtils.workerMainFunction=function(workerFunction,serializeArgs,unserializeArgs){
-			"use strict";
-			var thread={
-				terminate:function (){
-					_postMessage("threadify-terminated",[]);
-					WorkerUtils.global.close();
-				},
-				error:function (){
-					_postMessage("threadify-error",arguments);
-				},
-				"return":function (){
-					_postMessage("threadify-return",arguments);
-					thread.terminate();
-				}
-			};
-			function _postMessage (name,args){
-				var serialized=serializeArgs(args || []);
-				var data={
-					name:name,
-					args:serialized.args
-				};
-				WorkerUtils.global.postMessage(data,serialized.transferable);
-			}
-			function _onMessage (event){
-				var data=event.data || {};
-				var args=unserializeArgs(data.args || []);
-				switch (data.name){
-					case "threadify-start":;
-						var result;
-						try {
-							result=workerFunction.apply(thread,args);
-							}catch (error){
-							thread.error(error);
-							thread.terminate();
-						}
-						if (result!==undefined){
-							_postMessage("threadify-return",[result]);
-							thread.terminate();
-							}else{
-							_postMessage("threadify-return",[]);
-						}
-					}
-			}
-			WorkerUtils.global.addEventListener("message",_onMessage,false);
-		}
-
-		WorkerUtils.getWorkTemplete=function(){
-			var reg=new RegExp("WorkerUtils.","g");
-			if(!WorkerUtils._workerMainStr)
-				WorkerUtils._workerMainStr=[
-			"var global=this;(",
-			WorkerUtils.workerMainFunction.toString().replace(reg,""),
-			")(",
-			"#{##}#",
-			",",
-			WorkerUtils.serializeArgs.toString().replace(reg,""),
-			",",
-			WorkerUtils.unserializeArgs.toString().replace(reg,""),
-			");"].join("\n");
-			return WorkerUtils._workerMainStr;
-		}
-
-		WorkerUtils.buildWorker=function(workerFunction){
-			var workerStr;
-			workerStr=WorkerUtils.getWorkTemplete().replace("#{##}#",workerFunction.toString());
-			var workerBlob=new Browser.window.Blob(
-			[
-			workerStr],{
-				type:"application/javascript"
-			});
-			var workerUrl=Browser.window.URL.createObjectURL(workerBlob);
-			return function (){
-				var args=[];
-				for (var i=0;i < arguments.length;i++){
-					args.push(arguments[i]);
-				}
-				return new WorkerJob(workerUrl,args);
-			};
-		}
-
-		WorkerUtils._strWorkerEnabeStatu=-1;
-		WorkerUtils._workerMainStr=null
-		__static(WorkerUtils,
-		['WorkerEnable',function(){return this.WorkerEnable=Browser.window.Worker;},'ImageData',function(){return this.ImageData=Browser.window.ImageData;},'global',function(){return this.global=Browser.window;}
-		]);
-		return WorkerUtils;
 	})()
 
 
@@ -12494,7 +12562,7 @@ var Laya=window.Laya=(function(window,document){
 			this._childs=Node.ARRAY_EMPTY;
 			this.timer=Laya.timer;
 			this._$P=Node.PROP_EMPTY;
-			this.conchModel=Render.isConchNode? this.createConchModel():null;
+			this.conchModel=Render.isConchNode ? this.createConchModel():null;
 		}
 
 		__class(Node,'laya.display.Node',_super);
@@ -12788,7 +12856,7 @@ var Laya=window.Laya=(function(window,document){
 		__proto._displayChild=function(node,display){
 			var childs=node._childs;
 			if (childs){
-				for (var i=childs.length-1;i >-1;i--){
+				for (var i=0,n=childs.length-1;i < n;i++){
 					var child=childs[i];
 					child._setDisplay(display);
 					child._childs.length && this._displayChild(child,display);
@@ -14916,6 +14984,135 @@ var Laya=window.Laya=(function(window,document){
 
 
 	/**
+	*@private
+	*Worker Image加载器
+	*/
+	//class laya.net.WorkerLoader extends laya.events.EventDispatcher
+	var WorkerLoader=(function(_super){
+		function WorkerLoader(){
+			this.worker=null;
+			WorkerLoader.__super.call(this);
+			var _$this=this;
+			this.worker=new Browser.window.Worker("libs/worker.js"+"?v=66355522349494");
+			this.worker.onmessage=function (evt){
+				_$this.workerMessage(evt.data);
+			}
+		}
+
+		__class(WorkerLoader,'laya.net.WorkerLoader',_super);
+		var __proto=WorkerLoader.prototype;
+		__proto.workerMessage=function(data){
+			if (data){
+				switch(data.type){
+					case "Image":
+						this.imageLoaded(data);
+						break ;
+					case "Msg":
+						this.event("image_err",data.msg);
+						break ;
+					}
+			}
+		}
+
+		__proto.imageLoaded=function(data){
+			if (!data.dataType){
+				this.event(data.url,null);
+				this.event("image_err",data.url+"\n"+data.msg);
+				return;
+			};
+			var acceptTime=NaN;
+			acceptTime=Browser.now();
+			var canvas=new HTMLCanvas("2D");
+			var ctx;
+			ctx=canvas.source.getContext("2d");
+			var imageData;
+			switch(data.dataType){
+				case "buffer":
+					imageData=ctx.createImageData(data.width,data.height);
+					imageData.data.set(data.buffer);
+					canvas.size(imageData.width,imageData.height);
+					ctx.putImageData(imageData,0,0);
+					break ;
+				case "imagedata":
+					imageData=data.imagedata;
+					canvas.size(imageData.width,imageData.height);
+					ctx.putImageData(imageData,0,0);
+					imageData=data.imagedata;
+					break ;
+				case "imageBitmap":
+					imageData=data.imageBitmap;
+					canvas.size(imageData.width,imageData.height);
+					ctx.drawImage(imageData,0,0);
+					break ;
+				}
+			if (Render.isWebGL){
+				canvas=new laya.webgl.resource.WebGLImage(canvas,data.url);;
+			}
+			this.event(data.url,canvas);
+		}
+
+		__proto.myTrace=function(__arg){
+			var arg=arguments;
+			var rst;
+			rst=[];
+			var i=0,len=arg.length;
+			for(i=0;i<len;i++){
+				rst.push(arg[i]);
+			}
+			this.event("image_err",rst.join(" "));
+		}
+
+		__proto.loadImage=function(path){
+			var data;
+			data={};
+			data.type="load";
+			data.url=path;
+			this.worker.postMessage(data);
+		}
+
+		/**
+		*@private
+		*加载图片资源。
+		*@param url 资源地址。
+		*/
+		__proto._loadImage=function(url){
+			var _this=this;
+			if (url.toLowerCase().indexOf(".png")< 0){
+				WorkerLoader._preLoadFun.call(_this,url);
+				return;
+			}
+			function clear (){
+				laya.net.WorkerLoader.I.off(url,_this,onload);
+			};
+			var onload=function (image){
+				clear();
+				if (image){
+					_this.onLoaded(image);
+					}else{
+					WorkerLoader._preLoadFun.call(_this,url);
+				}
+			};
+			laya.net.WorkerLoader.I.on(url,_this,onload);
+			laya.net.WorkerLoader.I.loadImage(url);
+		}
+
+		WorkerLoader.__init__=function(){
+			if (!Browser.window.Worker)return;
+			WorkerLoader._preLoadFun=Loader["prototype"]["_loadImage"];
+			Loader["prototype"]["_loadImage"]=WorkerLoader["prototype"]["_loadImage"];
+			if (!WorkerLoader.I)WorkerLoader.I=new WorkerLoader();
+			return true;
+		}
+
+		WorkerLoader.IMAGE_LOADED="image_loaded";
+		WorkerLoader.IMAGE_ERR="image_err";
+		WorkerLoader.I=null
+		WorkerLoader._preLoadFun=null
+		return WorkerLoader;
+	})(EventDispatcher)
+
+
+	/**
 	*<code>Resource</code> 资源存取类。
 	*/
 	//class laya.resource.Resource extends laya.events.EventDispatcher
@@ -15419,74 +15616,6 @@ var Laya=window.Laya=(function(window,document){
 		Texture._rect1=new Rectangle();
 		Texture._rect2=new Rectangle();
 		return Texture;
-	})(EventDispatcher)
-
-
-	/**
-	*@private
-	*Worker Image加载器
-	*/
-	//class laya.workers.ImageLoaderWorker extends laya.events.EventDispatcher
-	var ImageLoaderWorker=(function(_super){
-		function ImageLoaderWorker(){
-			this.worker=null;
-			ImageLoaderWorker.__super.call(this);
-			var _$this=this;
-			this.worker=new Browser.window.Worker("libs/worker.js"+"?v=33554456635533");
-			this.worker.onmessage=function (evt){
-				_$this.workerMessage(evt.data);
-			}
-		}
-
-		__class(ImageLoaderWorker,'laya.workers.ImageLoaderWorker',_super);
-		var __proto=ImageLoaderWorker.prototype;
-		__proto.workerMessage=function(data){
-			if (data){
-				switch(data.type){
-					case "Image":
-						this.imageLoaded(data);
-						break ;
-					}
-			}
-		}
-
-		__proto.imageLoaded=function(data){
-			if (!data.buffer){
-				this.event(data.url,null);
-				this.event("image_err",data.url+"\n"+data.msg);
-				return;
-			};
-			var imageData;
-			var canvas=new HTMLCanvas("2D");
-			var ctx;
-			ctx=canvas.source.getContext("2d");
-			imageData=ctx.createImageData(data.width,data.height);
-			imageData.data.set(data.buffer);
-			canvas.size(imageData.width,imageData.height);
-			ctx.putImageData(imageData,0,0);
-			console.log();
-			if (Render.isWebGL){
-				canvas=new laya.webgl.resource.WebGLImage(canvas,data.url);;
-			}
-			this.event(data.url,canvas);
-		}
-
-		__proto.loadImage=function(path){
-			var data;
-			data={};
-			data.type="load";
-			data.url=path;
-			this.worker.postMessage(data);
-		}
-
-		ImageLoaderWorker.init=function(){
-			if (!ImageLoaderWorker.I)ImageLoaderWorker.I=new ImageLoaderWorker();
-		}
-
-		ImageLoaderWorker.IMAGE_LOADED="image_loaded";
-		ImageLoaderWorker.IMAGE_ERR="image_err";
-		ImageLoaderWorker.I=null
-		return ImageLoaderWorker;
 	})(EventDispatcher)
 
 
@@ -18802,7 +18931,10 @@ var Laya=window.Laya=(function(window,document){
 			if (this._zOrder !=value){
 				this._zOrder=value;
 				this.conchModel && this.conchModel.setZOrder && this.conchModel.setZOrder(value);
-				this._parent && Laya.timer.callLater(this._parent,this.updateZOrder);
+				if (this._parent){
+					value && this._parent._set$P("hasZorder",true);
+					Laya.timer.callLater(this._parent,this.updateZOrder);
+				}
 			}
 		});
 
@@ -20822,6 +20954,7 @@ var Laya=window.Laya=(function(window,document){
 			this.autoSize=false;
 			this._displayedInStage=true;
 			this._isFocused=true;
+			this._isVisibility=true;
 			var _this=this;
 			var window=Browser.window;
 			window.addEventListener("focus",function(){
@@ -23572,116 +23705,6 @@ var Laya=window.Laya=(function(window,document){
 
 
 	/**
-	*<code>HTMLImage</code> 用于创建 HTML Image 元素。
-	*@private
-	*/
-	//class laya.resource.HTMLImage extends laya.resource.FileBitmap
-	var HTMLImage=(function(_super){
-		function HTMLImage(src,def){
-			this._recreateLock=false;
-			this._needReleaseAgain=false;
-			HTMLImage.__super.call(this);
-			this._init_(src,def);
-		}
-
-		__class(HTMLImage,'laya.resource.HTMLImage',_super);
-		var __proto=HTMLImage.prototype;
-		__proto._init_=function(src,def){
-			this._src=src;
-			this._source=new Browser.window.Image();
-			if (def){
-				def.onload && (this.onload=def.onload);
-				def.onerror && (this.onerror=def.onerror);
-				def.onCreate && def.onCreate(this);
-			}
-			if (src.indexOf("data:image")!=0)this._source.crossOrigin="";
-			(src)&& (this._source.src=src);
-		}
-
-		/**
-		*@inheritDoc
-		*/
-		__proto.recreateResource=function(){
-			var _$this=this;
-			if (this._src==="")
-				throw new Error("src no null！");
-			this._needReleaseAgain=false;
-			if (!this._source){
-				this._recreateLock=true;
-				this.startCreate();
-				var _this=this;
-				this._source=new Browser.window.Image();
-				this._source.crossOrigin="";
-				this._source.onload=function (){
-					if (_this._needReleaseAgain){
-						_this._needReleaseAgain=false;
-						_this._source.onload=null;
-						_this._source=null;
-						return;
-					}
-					_this._source.onload=null;
-					_this.memorySize=_$this._w *_$this._h *4;
-					_this._recreateLock=false;
-					_this.completeCreate();
-				};
-				this._source.src=this._src;
-				}else {
-				if (this._recreateLock)
-					return;
-				this.startCreate();
-				this.memorySize=this._w *this._h *4;
-				this._recreateLock=false;
-				this.completeCreate();
-			}
-		}
-
-		/**
-		*@inheritDoc
-		*/
-		__proto.detoryResource=function(){
-			if (this._recreateLock)
-				this._needReleaseAgain=true;
-			(this._source)&& (this._source=null,this.memorySize=0);
-		}
-
-		/***调整尺寸。*/
-		__proto.onresize=function(){
-			this._w=this._source.width;
-			this._h=this._source.height;
-		}
-
-		/**
-		*@inheritDoc
-		*/
-		__getset(0,__proto,'onload',null,function(value){
-			var _$this=this;
-			this._onload=value;
-			this._source && (this._source.onload=this._onload !=null ? (function(){
-				_$this.onresize();
-				_$this._onload();
-			}):null);
-		});
-
-		/**
-		*@inheritDoc
-		*/
-		__getset(0,__proto,'onerror',null,function(value){
-			var _$this=this;
-			this._onerror=value;
-			this._source && (this._source.onerror=this._onerror !=null ? (function(){
-				_$this._onerror()
-			}):null);
-		});
-
-		HTMLImage.create=function(src,def){
-			return new HTMLImage(src,def);
-		}
-
-		return HTMLImage;
-	})(FileBitmap)
-
-
-	/**
 	*<code>Image</code> 类是用于表示位图图像或绘制图形的显示对象。
 	*@example 以下示例代码，创建了一个新的 <code>Image</code> 实例，设置了它的皮肤、位置信息，并添加到舞台上。
 	*<listing version="3.0">
@@ -23888,6 +23911,116 @@ var Laya=window.Laya=(function(window,document){
 
 		return Image;
 	})(Component)
+
+
+	/**
+	*<code>HTMLImage</code> 用于创建 HTML Image 元素。
+	*@private
+	*/
+	//class laya.resource.HTMLImage extends laya.resource.FileBitmap
+	var HTMLImage=(function(_super){
+		function HTMLImage(src,def){
+			this._recreateLock=false;
+			this._needReleaseAgain=false;
+			HTMLImage.__super.call(this);
+			this._init_(src,def);
+		}
+
+		__class(HTMLImage,'laya.resource.HTMLImage',_super);
+		var __proto=HTMLImage.prototype;
+		__proto._init_=function(src,def){
+			this._src=src;
+			this._source=new Browser.window.Image();
+			if (def){
+				def.onload && (this.onload=def.onload);
+				def.onerror && (this.onerror=def.onerror);
+				def.onCreate && def.onCreate(this);
+			}
+			if (src.indexOf("data:image")!=0)this._source.crossOrigin="";
+			(src)&& (this._source.src=src);
+		}
+
+		/**
+		*@inheritDoc
+		*/
+		__proto.recreateResource=function(){
+			var _$this=this;
+			if (this._src==="")
+				throw new Error("src no null！");
+			this._needReleaseAgain=false;
+			if (!this._source){
+				this._recreateLock=true;
+				this.startCreate();
+				var _this=this;
+				this._source=new Browser.window.Image();
+				this._source.crossOrigin="";
+				this._source.onload=function (){
+					if (_this._needReleaseAgain){
+						_this._needReleaseAgain=false;
+						_this._source.onload=null;
+						_this._source=null;
+						return;
+					}
+					_this._source.onload=null;
+					_this.memorySize=_$this._w *_$this._h *4;
+					_this._recreateLock=false;
+					_this.completeCreate();
+				};
+				this._source.src=this._src;
+				}else {
+				if (this._recreateLock)
+					return;
+				this.startCreate();
+				this.memorySize=this._w *this._h *4;
+				this._recreateLock=false;
+				this.completeCreate();
+			}
+		}
+
+		/**
+		*@inheritDoc
+		*/
+		__proto.detoryResource=function(){
+			if (this._recreateLock)
+				this._needReleaseAgain=true;
+			(this._source)&& (this._source=null,this.memorySize=0);
+		}
+
+		/***调整尺寸。*/
+		__proto.onresize=function(){
+			this._w=this._source.width;
+			this._h=this._source.height;
+		}
+
+		/**
+		*@inheritDoc
+		*/
+		__getset(0,__proto,'onload',null,function(value){
+			var _$this=this;
+			this._onload=value;
+			this._source && (this._source.onload=this._onload !=null ? (function(){
+				_$this.onresize();
+				_$this._onload();
+			}):null);
+		});
+
+		/**
+		*@inheritDoc
+		*/
+		__getset(0,__proto,'onerror',null,function(value){
+			var _$this=this;
+			this._onerror=value;
+			this._source && (this._source.onerror=this._onerror !=null ? (function(){
+				_$this._onerror()
+			}):null);
+		});
+
+		HTMLImage.create=function(src,def){
+			return new HTMLImage(src,def);
+		}
+
+		return HTMLImage;
+	})(FileBitmap)
 
 
 	//class laya.webgl.shader.d2.Shader2X extends laya.webgl.shader.Shader
@@ -24248,7 +24381,7 @@ var Laya=window.Laya=(function(window,document){
 	})(HTMLImage)
 
 
-	Laya.__init([EventDispatcher,DrawText,Render,Browser,Timer,LoaderManager,LocalStorage,AtlasGrid,WebGLContext2D,RenderTargetMAX,ShaderCompile]);
+	Laya.__init([EventDispatcher,Browser,Render,DrawText,Timer,LoaderManager,LocalStorage,AtlasGrid,WebGLContext2D,RenderTargetMAX,ShaderCompile]);
 	new TestWorker();
 
 })(window,document,Laya);
