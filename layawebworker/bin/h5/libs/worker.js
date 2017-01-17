@@ -142,7 +142,7 @@ function pngLoaded(png)
 	
 	data.width=png.width;
 	data.height=png.height;
-	data.getBufferTime=getTimeNow()-png.decodeEndTime;
+	//data.getBufferTime=getTimeNow()-png.decodeEndTime;
 	//data.startTime=png.startTime;
 	//data.decodeTime=png.decodeTime;
 	//data.sendTime=getTimeNow();
