@@ -65,7 +65,7 @@ package laya.workers {
 					if (args[i] instanceof ArrayBuffer) {
 						transferable.push(args[i]);
 					}
-					else if ("ImageData" in global && args[i] instanceof ImageData) {
+					else if ("ImageData" in global && args[i] instanceof global.ImageData) {
 						transferable.push(args[i].data.buffer);
 					}
 					else {

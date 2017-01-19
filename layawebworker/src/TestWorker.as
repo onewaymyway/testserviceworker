@@ -66,7 +66,7 @@ package {
 			testAni();
 			testImageDecode();
 			if (WorkerLoader.I)
-				WorkerLoader.I.on(WorkerLoader.IMAGE_ERR, this, showInfo);
+				WorkerLoader.I.on(WorkerLoader.IMAGE_MSG, this, showInfo);
 			
 			//testCreateImageBitmap("res/monster_tongbilinghou.png");
 			//testCreateImageBitmap("res/btn_close.png");

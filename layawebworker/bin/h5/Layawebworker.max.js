@@ -580,7 +580,7 @@ var Laya=window.Laya=(function(window,document){
 					if (args[i] instanceof ArrayBuffer){
 						transferable.push(args[i]);
 					}
-					else if ("ImageData" in WorkerUtils.global && args[i] instanceof WorkerUtils.ImageData){
+					else if ("ImageData" in WorkerUtils.global && args[i] instanceof WorkerUtils.global.ImageData){
 						transferable.push(args[i].data.buffer);
 					}
 					else {
@@ -1103,7 +1103,7 @@ var Laya=window.Laya=(function(window,document){
 						n--;
 					}
 				}
-				if (listeners.length===0)delete this._events[type];
+				if (listeners.length===0 && this._events)delete this._events[type];
 			}
 			return true;
 		}
@@ -12856,7 +12856,7 @@ var Laya=window.Laya=(function(window,document){
 		__proto._displayChild=function(node,display){
 			var childs=node._childs;
 			if (childs){
-				for (var i=0,n=childs.length-1;i < n;i++){
+				for (var i=0,n=childs.length;i < n;i++){
 					var child=childs[i];
 					child._setDisplay(display);
 					child._childs.length && this._displayChild(child,display);
@@ -15001,6 +15001,9 @@ var Laya=window.Laya=(function(window,document){
 
 		__class(WorkerLoader,'laya.net.WorkerLoader',_super);
 		var __proto=WorkerLoader.prototype;
+		/**
+		*@private
+		*/
 		__proto.workerMessage=function(data){
 			if (data){
 				switch(data.type){
@@ -15008,21 +15011,23 @@ var Laya=window.Laya=(function(window,document){
 						this.imageLoaded(data);
 						break ;
 					case "Msg":
-						this.event("image_err",data.msg);
+						this.event("image_msg",data.msg);
 						break ;
 					}
 			}
 		}
 
+		/**
+		*@private
+		*/
 		__proto.imageLoaded=function(data){
 			if (!data.dataType){
 				this.event(data.url,null);
 				this.event("image_err",data.url+"\n"+data.msg);
 				return;
 			};
-			var acceptTime=NaN;
-			acceptTime=Browser.now();
 			var canvas=new HTMLCanvas("2D");
+			canvas.src=data.url;
 			var ctx;
 			ctx=canvas.source.getContext("2d");
 			var imageData;
@@ -15051,22 +15056,28 @@ var Laya=window.Laya=(function(window,document){
 			this.event(data.url,canvas);
 		}
 
-		__proto.myTrace=function(__arg){
+		/**
+		*@private
+		*/
+		__proto._myTrace=function(__arg){
 			var arg=arguments;
-			var rst;
-			rst=[];
+			var rst=[];
 			var i=0,len=arg.length;
 			for(i=0;i<len;i++){
 				rst.push(arg[i]);
 			}
-			this.event("image_err",rst.join(" "));
+			this.event("image_msg",rst.join(" "));
 		}
 
-		__proto.loadImage=function(path){
+		/**
+		*加载图片
+		*@param url 图片地址
+		*/
+		__proto.loadImage=function(url){
 			var data;
 			data={};
 			data.type="load";
-			data.url=path;
+			data.url=url;
 			this.worker.postMessage(data);
 		}
 
@@ -15077,7 +15088,7 @@ var Laya=window.Laya=(function(window,document){
 		*/
 		__proto._loadImage=function(url){
 			var _this=this;
-			if (url.toLowerCase().indexOf(".png")< 0){
+			if (!WorkerLoader._enable||url.toLowerCase().indexOf(".png")< 0){
 				WorkerLoader._preLoadFun.call(_this,url);
 				return;
 			}
@@ -15096,7 +15107,18 @@ var Laya=window.Laya=(function(window,document){
 			laya.net.WorkerLoader.I.loadImage(url);
 		}
 
+		/**
+		*是否启用。
+		*/
+		__getset(1,WorkerLoader,'enable',function(){
+			return WorkerLoader._enable;
+			},function(v){
+			WorkerLoader._enable=v;
+			if (WorkerLoader._enable && !WorkerLoader._preLoadFun)WorkerLoader.__init__();
+		});
+
 		WorkerLoader.__init__=function(){
+			if (WorkerLoader._preLoadFun)return;
 			if (!Browser.window.Worker)return;
 			WorkerLoader._preLoadFun=Loader["prototype"]["_loadImage"];
 			Loader["prototype"]["_loadImage"]=WorkerLoader["prototype"]["_loadImage"];
@@ -15106,8 +15128,10 @@ var Laya=window.Laya=(function(window,document){
 
 		WorkerLoader.IMAGE_LOADED="image_loaded";
 		WorkerLoader.IMAGE_ERR="image_err";
+		WorkerLoader.IMAGE_MSG="image_msg";
 		WorkerLoader.I=null
 		WorkerLoader._preLoadFun=null
+		WorkerLoader._enable=false;
 		return WorkerLoader;
 	})(EventDispatcher)
 
@@ -18336,25 +18360,18 @@ var Laya=window.Laya=(function(window,document){
 			if (tf.rotate || sx!==1 || sy!==1 || tf.skewX || tf.skewY){
 				m=this._transform || (this._transform=Matrix.create());
 				m.bTransform=true;
-				if (tf.rotate){
-					var angle=tf.rotate *0.0174532922222222;
-					var cos=m.cos=Math.cos(angle);
-					var sin=m.sin=Math.sin(angle);
-					m.a=sx *cos;
-					m.b=sx *sin;
-					m.c=-sy *sin;
-					m.d=sy *cos;
-					m.tx=m.ty=0;
-					return m;
-					}else {
-					m.a=sx;
-					m.d=sy;
-					m.c=m.b=m.tx=m.ty=0;
-					if (tf.skewX || tf.skewY){
-						return m.skew(tf.skewX *0.0174532922222222,tf.skewY *0.0174532922222222);
-					}
-					return m;
-				}
+				var skx=(tf.rotate-tf.skewX)*0.0174532922222222;
+				var sky=(tf.rotate+tf.skewY)*0.0174532922222222;
+				var cx=Math.cos(sky);
+				var ssx=Math.sin(sky);
+				var cy=Math.sin(skx);
+				var ssy=Math.cos(skx);
+				m.a=sx *cx;
+				m.b=sx *ssx;
+				m.c=-sy *cy;
+				m.d=sy *ssy;
+				m.tx=m.ty=0;
+				return m;
 				}else {
 				this._transform && this._transform.destroy();
 				this._transform=null;
