@@ -4,7 +4,7 @@
   <output>
     <movie outputType="Application" />
     <movie input="" />
-    <movie path="bin\Layawebworker.swf" />
+    <movie path="bin\Testlib.swf" />
     <movie fps="30" />
     <movie width="800" />
     <movie height="600" />
@@ -16,12 +16,8 @@
   <!-- Other classes to be compiled into your SWF -->
   <classpaths>
     <class path="src" />
+    <class path="..\layaserviceworker\src" />
     <class path="..\..\..\..\codes\laya\libs\LayaAir\core\src" />
-    <class path="..\..\..\..\codes\laya\libs\LayaAir\core\jsc" />
-    <class path="..\..\..\..\codes\laya\libs\LayaAir\ui\src" />
-    <class path="..\..\..\..\codes\laya\libs\LayaAir\webGL\src" />
-    <class path="..\..\..\..\codes\laya\libs\LayaAir\plugins\debugtool\src" />
-    <class path="..\..\..\..\codes\laya\libs\LayaAir\filter\src" />
   </classpaths>
   <!-- Build options -->
   <build>
@@ -78,7 +74,7 @@
   </library>
   <!-- Class files to compile (other referenced classes will automatically be included) -->
   <compileTargets>
-    <compile path="src\TestWorker2.as" />
+    <compile path="src\TestServiceWorker.as" />
   </compileTargets>
   <!-- Paths to exclude from the Project Explorer tree -->
   <hiddenPaths>

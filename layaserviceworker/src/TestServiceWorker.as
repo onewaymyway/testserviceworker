@@ -21,6 +21,7 @@ package {
 			msgTxt.size(1000, 600);
 			msgTxt.color = "#00ff00";
 			msgTxt.zOrder = 100;
+			Laya.alertGlobalError = true;
 			Laya.stage.addChild(msgTxt);
 			showInfo("hello");
 			//Laya.timer.frameOnce(1, this, initServiceWorker);
@@ -53,6 +54,7 @@ package {
 		}
 		
 		private function serviceWorkerInited():void {
+			showInfo("serviceWorkerEnabled:"+ServiceWorkerTools.I.workerEnabled);
 			showInfo("serviceWorkerInited from client");
 			showInfo("load fileconfig.json");
 			Laya.loader.load("fileconfig.json"+"?v="+Math.random(),new Handler(this,onFileVerFile),null,Loader.JSON)

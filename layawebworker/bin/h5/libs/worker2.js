@@ -541,6 +541,7 @@ var FlateStream = (function() {
           }
           return _results;
         }).call(this)).join('');
+		console.log(section);
         switch (section) {
           case 'IHDR':
             this.width = this.readUInt32();
@@ -701,7 +702,9 @@ var FlateStream = (function() {
       pos = 0;
       c = 0;
       while (pos < length) {
-        switch (data[pos++]) {
+		  tlinetype=data[pos++];
+		  console.log("linetype:");
+        switch (tlinetype) {
           case 0:
             for (i = _i = 0; _i < scanlineLength; i = _i += 1) {
               pixels[c++] = data[pos++];
@@ -768,7 +771,7 @@ var FlateStream = (function() {
       var c, i, length, palette, pos, ret, transparency, _i, _ref, _ref1;
       palette = this.palette;
       transparency = this.transparency.indexed || [];
-      var retlen;
+	  var retlen;
 	  retlen= palette.length*4/3;
 	  //retlen=(transparency.length || 0) + palette.length;
       ret = new Uint8Array(retlen);
@@ -879,7 +882,6 @@ var FlateStream = (function() {
 onmessage =function (evt){
   
   var data = evt.data;//通过evt.data获得发送来的数据
-  myTrace("png:onmessage:"+data.url);
   switch(data.type)
   {
 	  case "load":
@@ -887,16 +889,6 @@ onmessage =function (evt){
 		  loadImage2(data);
 		  break;
   }
-  if(!isSet)
-  {
-	  isSet=true;
-	  setInterval(workerloop,1000);
-   }
-}
-var isSet=false;
-function workerloop()
-{
-	myTrace("png:workerloop");
 }
 var canUseImageData=false;
 testCanImageData();
@@ -916,40 +908,23 @@ function loadImage(data)
 {
 	PNG.load(data.url,pngLoaded);
 }
-var enableTrace=false;
-function myTrace(msg)
-{
-	if(!enableTrace) return;
-	console.log("png:"+msg)
-}
 function loadImage2(data)
 {
 	var url=data.url;
 	var xhr,
     _this = this;
-	var failed=false;
       xhr = new XMLHttpRequest;
       xhr.open("GET", url, true);
 	  //showMsgToMain("loadImage2");
 	  xhr.responseType = "arraybuffer";
-      myTrace("load:"+url);
+      
       xhr.onload = function() {
 		var response=xhr.response || xhr.mozResponseArrayBuffer;
 		//showMsgToMain("onload:");
-		myTrace("onload:"+url);
-		if((xhr.status != 200&&xhr.status!=0)||response.byteLength<10)
-		{
-			if(!failed)
-			{
-				failed=true;
-				pngFail(url,"loadFail from onload"+xhr.status);
-			}
-			
-			return;
-		}
+		
         var data, png;
         data = new Uint8Array(response);
-		if(self.createImageBitmap)
+		if(self.createImageBitmap&&0)
 		{
 			doCreateImageBitmap(data,url);
 			return;
@@ -977,7 +952,6 @@ function loadImage2(data)
 	  xhr.onerror = function(e){
 		pngFail(url,"loadFail");
 	}
-
       xhr.send(null);
 }
 function doCreateImageBitmap(response,url)
@@ -1002,14 +976,14 @@ function doCreateImageBitmap(response,url)
 	        data.decodeTime=getTimeNow()-startTime;
 			data.sendTime=getTimeNow();
 			
-			myTrace("png:Decode By createImageBitmap,"+data.decodeTime,url);
+			console.log("Decode By createImageBitmap,"+data.decodeTime,url);
 			
 			data.type="Image";
 			postMessage(data,[data.imageBitmap]);
         }).catch(
 		function(e)
 		{
-			showMsgToMain("catch e:"+e);
+			showMsgToMain("cache:"+e);
 			pngFail(url,"parse fail"+e+":ya");
 		}
 		)
@@ -1029,7 +1003,7 @@ function pngFail(url,msg)
 	data.imagedata=null;
 	data.type="Image";
 	data.msg=msg;
-	console.log("png:"+msg+" "+url);
+	console.log(msg);
 	postMessage(data);
 }
 function showMsgToMain(msg)
@@ -1061,7 +1035,7 @@ function pngLoaded(png)
 	//data.decodeTime=png.decodeTime;
 	data.decodeTime=getTimeNow()-png.startTime;
 	//data.sendTime=getTimeNow();
-	myTrace("png:Decode By PNG.js,"+(getTimeNow()-png.startTime)+" "+png.url);
+	console.log("Decode By PNG.js,"+(getTimeNow()-png.startTime),png.url);
 	data.type="Image";
 	//debugger;
 	if(canUseImageData)
