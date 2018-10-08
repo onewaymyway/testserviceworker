@@ -39,6 +39,7 @@ package {
 			//showInfo("WorkerLoader:" + WorkerLoader.__init__());
 			showInfo("workerEnable:" + WorkerUtils.WorkerEnable);
 			showInfo("StrWorkerEnable:" + WorkerUtils.StrWorkerEnable);
+			WorkerLoader.workerPath = "libs/worker.js?v=333";
 			try {
 				new Browser.window.ImageData(22, 22);
 				showInfo("create ImageData success");

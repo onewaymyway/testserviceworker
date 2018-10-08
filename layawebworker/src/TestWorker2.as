@@ -69,6 +69,7 @@ package
 			
 			tUrl = "https://www.baidu.com/s?wd=%E7%BE%8E%E5%A5%B3%E5%9B%BE%E7%89%87%E5%BA%93&rsv_idx=2&tn=baiduhome_pg&usm=3&ie=utf-8&rsv_cq=%E5%9B%BE%E7%89%87&rsv_dl=0_right_recommends_merge_20826&euri=2853269";
 			tUrl = "res/0.png";
+			tUrl = "res/btn_close.png";
 			//tUrl = "http://42.62.12.38/missBeauty/ui/skill1huode/art_jinenghuan.png";
 			//tUrl = "abc.png";
 			urls.push({ url:tUrl, type:Loader.IMAGE } );

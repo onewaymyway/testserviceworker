@@ -917,10 +917,15 @@ function loadImage(data)
 	PNG.load(data.url,pngLoaded);
 }
 var enableTrace=false;
+var ifShowTraceToMain=false;
 function myTrace(msg)
 {
 	if(!enableTrace) return;
 	console.log("png:"+msg)
+	if(ifShowTraceToMain)
+	{
+		showMsgToMain(msg);
+	}
 }
 function loadImage2(data)
 {
